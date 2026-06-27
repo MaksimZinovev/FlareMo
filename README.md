@@ -22,24 +22,24 @@ A Memos-compatible, Cloudflare-native personal knowledge management system.
 
 ## 初心
 
-我一直在找一个"随手记下、慢慢长成知识"的工具。
+起因很俗:想找一个"随手记下、慢慢长成知识"的工具。
 
-- 想要 Flomo 那种**开箱即记、不打扰的灵感收集**体验;
-- 想要 Memos 那种**成熟的开源生态、数据可迁移、API 可玩**;
-- 又不想再自建一台 VPS、维护 Docker、Postgres、Node 常驻进程。
+- 想要 Flomo 那种**开箱即记、不打扰的灵感收集**;
+- 想要 Memos 那种**成熟开源生态、数据可迁、API 能玩**;
+- 又不想再开一台 VPS、维护 Docker、Postgres、Node 常驻进程。
 
-于是有了 FlareMo —— 把 Memos 的数据模型与公共协议当成"规范",把整套运行时**重新搭在 Cloudflare 上**:Workers 跑 API、D1 存笔记、R2 放附件、Queues/Cron 跑后台、Vectorize + Workers AI 做语义检索与 AI 工作流。
+那怎么办。FlareMo 的做法是把 Memos 的数据模型和 `/api/v1` 当成"规范",运行时**整个重搭到 Cloudflare 上**:Workers 跑 API、D1 存笔记、R2 放附件、Queues/Cron 跑后台、Vectorize + Workers AI 留给以后的语义检索和 AI 工作流。
 
-一句话:**站在 Memos 的肩膀上,做一份真正属于边缘云的个人知识库。**
+**站在 Memos 的肩膀上,做一份长在边缘云上的个人知识库。**
 
-**The idea:** keep the quick-capture spirit of Flomo, reuse the Memos
-ecosystem as much as possible, and make the whole stack deployable on
-Cloudflare — no long-running VM, Docker, Postgres, or Node server as a
-core production dependency.
+> The idea: keep the quick-capture spirit of Flomo, reuse the Memos
+> ecosystem as much as possible, and make the whole stack deployable on
+> Cloudflare — no long-running VM, Docker, Postgres, or Node server as a
+> core production dependency.
 
 ## 定位
 
-FlareMo 不是一个通用的"再来一个笔记 App",目标是分阶段演进:
+FlareMo 不是"再来一个笔记 App",目标分三段走:
 
 | 阶段 | 定位 | 关键能力 |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ FlareMo 不是一个通用的"再来一个笔记 App",目标是分阶段演进:
 | **v1.5** | 个人知识库雏形 | R2 附件、链接预览、向量索引、语义搜索 |
 | **v2** | 真正的个人知识管理平台 | 问我的笔记、每日/每周回顾、相关笔记、附件抽取、AI 标签建议 |
 
-核心约束从一开始就定死:**全部跑在 Cloudflare 上**。Workers 边缘运行时是一个请求一次执行的世界,我们刻意不引入常驻进程、文件系统、本地 SQLite 驱动这些"传统后端"假设。这意味着架构要重写,但换来的是全球低延迟、零运维、按量计费、与 Cloudflare AI/向量/队列原语天然打通。
+一条硬约束从开仓那天就定死:**全部跑在 Cloudflare 上**。Workers 是"一个请求跑一次"的世界,没有常驻进程、本地文件、原生 SQLite 驱动这些传统后端假设。代价是架构基本要重写,好处是零运维、按量计费,而且天然接得上 Cloudflare 的 AI、向量、队列。
 
 **Positioning:** a staged personal knowledge platform — start as a
 Flomo-style capture + Memos-compatible note system on Cloudflare, then
@@ -81,15 +81,14 @@ staying fully Cloudflare-native every step of the way.
 
 ## 为什么是 Memos + Cloudflare
 
-在这个赛道里,Memos 拥有最成熟的开源生态:成型的数据模型、明确的
-API 方向、OpenAPI 工作、导入导出价值,以及一大群活跃用户。
+同类开源项目里,Memos 的生态最成熟:数据模型成型,API 方向明确,有
+OpenAPI,导入导出能用,还有一大群真在用的人。
 
-Cloudflare 又恰好提供了轻量个人知识系统所需的原语:全球 Workers、
-D1 的无服务器 SQLite、R2 的对象存储,以及边缘上的 AI 积木。
+Cloudflare 又恰好有轻量个人知识系统要的原语:全球 Workers、D1 的
+无服务 SQLite、R2 对象存储,加上边缘上的 AI 积木。
 
-FlareMo 把两者接起来:
-
-**Memos 生态兼容 + Cloudflare 原生部署 + Flomo 风格收集体验**
+两者拼起来就是 FlareMo:**Memos 生态兼容 + Cloudflare 原生部署 +
+Flomo 风格的收集体验**。
 
 ## 与 Memos 的关系
 
@@ -187,7 +186,7 @@ FlareMo 学习自:
 
 ## Star History
 
-本项目一天一起造,公开建造。Star 增长曲线会出现在这里:
+仓库从第一天起就公开造,Star 增长曲线会出现在这里:
 
 [![Star History Chart](https://api.star-history.com/svg?repos=realchendahuang/FlareMo&type=Date)](https://star-history.com/#realchendahuang/FlareMo&Date)
 
@@ -200,11 +199,11 @@ FlareMo 学习自:
 
 ## Build in Public
 
-本项目从第一天起**公开建造**。所有架构决策、踩坑记录、阶段目标都会在
-仓库里可见,欢迎一起围观、提 issue、提方向。
+**从开仓第一天起就公开造**。架构决策、踩坑记录、阶段目标都摊在仓库
+里,欢迎围观、提 issue、提方向。
 
-> 状态:早期,架构与实现阶段。如果你想要一个能完整跑在 Cloudflare 上的
-> Memos 兼容笔记系统,欢迎给个 Star ⭐。
+> 状态:早期,架构与实现阶段。如果你也想要一个能完整跑在 Cloudflare
+> 上的 Memos 兼容笔记系统,给个 Star ⭐。
 
 ## 贡献
 
