@@ -169,12 +169,14 @@ R2 作为附件对象存储。
 ```bash
 pnpm exec wrangler d1 create flaremo
 pnpm exec wrangler r2 bucket create flaremo-attachments
+pnpm exec wrangler secret put FLAREMO_ACCESS_TOKEN
 pnpm exec wrangler d1 migrations apply flaremo --remote
 pnpm deploy
 ```
 
 创建 D1 后需要把真实 `database_id` 写入 `wrangler.jsonc`。线上访问地址
-由 Wrangler 部署输出决定。
+由 Wrangler 部署输出决定。`FLAREMO_ACCESS_TOKEN` 是实例访问令牌，前端
+和 Memos 兼容 API 都使用 Bearer token 访问受保护接口。
 
 ## 建设清单
 

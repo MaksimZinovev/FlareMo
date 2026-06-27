@@ -56,6 +56,43 @@ export type ListMemoParams = {
   include_deleted?: boolean;
 };
 
+const ACCESS_TOKEN_STORAGE_KEY = "flaremo.access_token";
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export type AuthStatus = {
+  access_token_required: boolean;
+};
+
+export function getStoredAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? "";
+}
+
+export function storeAccessToken(token: string) {
+  const trimmed = token.trim();
+  if (trimmed) {
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, trimmed);
+    return;
+  }
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export async function getAuthStatus() {
+  return apiRequest<AuthStatus>("/api/app/auth", {}, { skipAuth: true });
+}
+
 export async function listMemos(params: ListMemoParams = {}) {
   const query = new URLSearchParams();
   query.set("page_size", "50");
@@ -65,40 +102,42 @@ export async function listMemos(params: ListMemoParams = {}) {
   if (params.tag) query.set("tag", params.tag);
   if (params.include_deleted) query.set("include_deleted", "true");
 
-  return request<ListMemosResponse>(`/api/app/memos?${query.toString()}`);
+  return apiRequest<ListMemosResponse>(`/api/app/memos?${query.toString()}`);
 }
 
 export async function createMemo(input: CreateMemoRequest) {
-  return request<Memo>("/api/app/memos", {
+  return apiRequest<Memo>("/api/app/memos", {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
 export async function updateMemo(id: string, input: UpdateMemoRequest) {
-  return request<Memo>(`/api/app/memos/${id}`, {
+  return apiRequest<Memo>(`/api/app/memos/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
 }
 
 export async function trashMemo(id: string) {
-  return request<Memo>(`/api/app/memos/${id}`, {
+  return apiRequest<Memo>(`/api/app/memos/${id}`, {
     method: "DELETE",
   });
 }
 
 export async function hardDeleteMemo(id: string) {
-  return request<{ ok: true }>(`/api/app/memos/${id}?hard=true`, {
+  return apiRequest<{ ok: true }>(`/api/app/memos/${id}?hard=true`, {
     method: "DELETE",
   });
 }
 
-async function request<T>(path: string, init: RequestInit = {}) {
+async function apiRequest<T>(path: string, init: RequestInit = {}, options: { skipAuth?: boolean } = {}) {
+  const token = options.skipAuth ? "" : getStoredAccessToken();
   const response = await fetch(path, {
     ...init,
     headers: {
       "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
   });
@@ -111,7 +150,7 @@ async function request<T>(path: string, init: RequestInit = {}) {
     } catch {
       // Keep status text.
     }
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   return (await response.json()) as T;
