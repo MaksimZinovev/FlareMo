@@ -16,7 +16,7 @@
 [![Powered by Cloudflare](https://img.shields.io/badge/powered%20by-Cloudflare-F38020?logo=cloudflare&logoColor=white)](https://www.cloudflare.com/)
 [![Memos compatible](https://img.shields.io/badge/Memos-compatible-0466c1?logo=data:image/svg+xml;base64,&labelColor=grey)](https://github.com/usememos/memos)
 [![Build in Public](https://img.shields.io/badge/build-public-FF1B6B)](https://github.com/realchendahuang/FlareMo)
-[![status](https://img.shields.io/badge/status-early-orange)](https://github.com/realchendahuang/FlareMo)
+[![status](https://img.shields.io/badge/status-building-orange)](https://github.com/realchendahuang/FlareMo)
 
 ---
 
@@ -28,19 +28,20 @@
 - 想要 Memos 那种**成熟开源生态、数据可迁、API 能玩**;
 - 又不想再开一台 VPS、维护 Docker、Postgres、Node 常驻进程。
 
-那怎么办。FlareMo 的做法是把 Memos 的数据模型和 `/api/v1` 当成"规范",运行时**整个重搭到 Cloudflare 上**:Workers 跑 API、D1 存笔记，附件和导出放 R2，语义检索和 AI 工作流以后再接 Vectorize 与 Workers AI。
+那怎么办。FlareMo 的做法是把 Memos 的数据模型和 `/api/v1` 当成"规范",运行时**整个重搭到 Cloudflare 上**:Workers 跑 API、D1 存笔记，R2 放附件和导出，Vectorize 与 Workers AI 承载语义检索和 AI 工作流。
 
 **站在 Memos 的肩膀上,做一份长在边缘云上的个人知识库。**
 
 ## 定位
 
-FlareMo 不是"再来一个笔记 App",目标分三段走:
+FlareMo 不是"再来一个笔记 App"。它的目标是一个完整的、Cloudflare 原生的、Memos 兼容的个人知识管理系统。
 
-| 阶段 | 定位 | 关键能力 |
-| --- | --- | --- |
-| **v1** | Flomo 风格的极速收集 + Memos 兼容笔记系统 | 快速记录、时间线、搜索、标签、导入导出、Memos `/api/v1` 子集 |
-| **v1.5** | 个人知识库雏形 | R2 附件、链接预览、向量索引、语义搜索 |
-| **v2** | 真正的个人知识管理平台 | 问我的笔记、每日/每周回顾、相关笔记、附件抽取、AI 标签建议 |
+它应该同时成立：
+
+- 像 Flomo 一样，打开就能记，不打扰。
+- 像 Memos 一样，数据能迁、API 能用、生态能复用。
+- 像一个真正的个人知识库一样，支持搜索、标签、附件、分享、导入导出、语义检索、回顾、相关笔记和"问我的笔记"。
+- 像一个 Cloudflare-native 产品一样，不依赖 VPS、Docker、Postgres、Node 常驻进程或本地文件系统。
 
 一条硬约束从开仓那天就定死:**全部跑在 Cloudflare 上**。Workers 是"一个请求跑一次"的世界,没有常驻进程、本地文件、原生 SQLite 驱动这些传统后端假设。代价是架构基本要重写,好处是零运维、按量计费,而且天然接得上 Cloudflare 的 AI、向量、队列。
 
@@ -60,8 +61,8 @@ FlareMo 不是"再来一个笔记 App",目标分三段走:
    - Workers 跑 API 与边缘运行时。
    - D1 存关系型数据。
    - R2 存附件、导出包、生成物、音频。
-   - Queues / Cron 只在出现后台任务时启用。
-   - Vectorize + Workers AI 只在语义检索与 AI 工作流稳定后启用。
+   - Queues / Cron 处理异步任务。
+   - Vectorize + Workers AI 承载语义检索与 AI 工作流。
 
 3. **Flomo 风格的产品体验**
    - 收集为先的写作流。
@@ -97,7 +98,7 @@ FlareMo 把 Memos 作为**主规范与生态锚点**,然后在 Cloudflare 上重
 
 ## 兼容性规划
 
-第一 compat 目标是一个**实用的 Memos 子集**,并非首日全量对齐。
+FlareMo 的兼容目标是让 Memos 生态能真实复用，而不是只做一个导入脚本。
 
 ### 数据兼容
 
@@ -109,7 +110,7 @@ FlareMo 把 Memos 作为**主规范与生态锚点**,然后在 Cloudflare 上重
 
 ### API 兼容
 
-计划优先实现的高价值端点:
+公共 API 兼容面包括:
 
 - `POST /api/v1/memos`
 - `GET /api/v1/memos`
@@ -130,7 +131,7 @@ FlareMo 把 Memos 作为**主规范与生态锚点**,然后在 Cloudflare 上重
 ### 生态兼容
 
 - 为脚本与工具支持 Bearer token / 个人访问令牌。
-- 为所支持的 `/api/v1` 子集维护 OpenAPI 文档。
+- 为 FlareMo 暴露的 `/api/v1` 维护 OpenAPI 文档。
 - 基于或对齐该 OpenAPI 生成 MCP 端点。
 
 ## 架构
@@ -142,13 +143,13 @@ flowchart LR
 
   Worker --> D1["D1: notes, users, settings, relations"]
   Worker --> R2["R2: attachments and exports"]
-  Worker -. optional .-> KV["KV: cache and lightweight config"]
-  Worker -. optional .-> Queues["Queues/Cron: async jobs"]
-  Queues -. optional .-> Vectorize["Vectorize: semantic index"]
-  Queues -. optional .-> AI["Workers AI / external AI providers"]
+  Worker --> Queues["Queues/Cron: async jobs"]
+  Queues --> Vectorize["Vectorize: semantic index"]
+  Queues --> AI["Workers AI / external AI providers"]
+  Worker -. cache/config only .-> KV["KV: cache and lightweight config"]
 ```
 
-## 路线图
+## 建设清单
 
 - [ ] Cloudflare Worker + Vite 应用脚手架
 - [ ] D1 migrations: Memos 兼容核心 schema
@@ -158,7 +159,7 @@ flowchart LR
 - [ ] Flomo 风格的收集与时间线 UI
 - [ ] Memos 数据的导入导出
 - [ ] R2 附件存储
-- [ ] 所支持兼容子集的 OpenAPI
+- [ ] Memos 兼容 API 的 OpenAPI
 - [ ] MCP 端点
 - [ ] 基于 Vectorize 的语义搜索
 - [ ] AI 回顾、相关笔记、"问我的笔记"工作流
@@ -189,10 +190,10 @@ FlareMo 学习自:
 
 ## 公开开发
 
-**从开仓第一天起就公开造**。架构决策、踩坑记录、阶段目标都摊在仓库
+**从开仓第一天起就公开造**。架构决策、踩坑记录、产品目标都摊在仓库
 里,欢迎围观、提 issue、提方向。
 
-> 状态:早期,架构与实现阶段。如果你也想要一个能完整跑在 Cloudflare
+> 状态:开源启动中。如果你也想要一个能完整跑在 Cloudflare
 > 上的 Memos 兼容笔记系统,给个 Star ⭐。
 
 ## 贡献

@@ -109,18 +109,18 @@ MeowNocode 是轻量 Cloudflare/D1 参考。
 
 ## Cloudflare-native 边界
 
-FlareMo 首先是一个简单可靠的笔记系统，不是 Cloudflare 全家桶展示项目。
+FlareMo 首先是一个完整可用的笔记和知识管理系统，不是 Cloudflare 全家桶展示项目。
 
-v1 核心只需要：
+核心路径必须稳定依赖：
 
 - Workers
 - Workers Static Assets
 - D1
 - Drizzle
 - Wrangler
-- R2：当实现附件和导出时启用
+- R2
 
-暂不进入 v1 核心：
+其他 Cloudflare 产品按能力边界使用，不作为数据库替代品：
 
 - KV：只在出现明确缓存或配置需求时使用。
 - Durable Objects：只在实时同步、协作、WebSocket、强一致限流或用户级协调真的需要时使用。
@@ -132,16 +132,16 @@ v1 核心只需要：
 
 兼容不是口号，而是产品能力。
 
-### Tier 0：数据兼容
+### 数据兼容
 
 - 采用 Memos 风格的核心实体：users、memos、memo relations、attachments、shares、settings、personal access tokens。
 - 保留 Memos 资源命名习惯：`memos/{id}`、`users/{id}`、`attachments/{id}`。
 - 保留可映射到 Memos 的 payload/property 结构：tags、title、has_link、has_task_list、has_code、has_incomplete_tasks、location。
 - 提供 Memos 数据导入导出路径。
 
-### Tier 1：REST API 子集兼容
+### REST API 兼容
 
-优先实现高价值 `/api/v1` 端点：
+FlareMo 对外暴露 Memos-compatible `/api/v1`。公共兼容面包括：
 
 - `POST /api/v1/memos`
 - `GET /api/v1/memos`
@@ -165,20 +165,18 @@ v1 核心只需要：
 - 常见分页参数：`page_size`、`page_token`。
 - 常见排序参数：`order_by`。
 - 常见状态过滤：`state`。
-- 简单 filter 子集。
+- 常见 filter 表达式。
 
-### Tier 2：生态兼容
+### 生态兼容
 
-- 为支持的 `/api/v1` 子集维护 OpenAPI 文档。
+- 为 FlareMo 暴露的 `/api/v1` 维护 OpenAPI 文档。
 - 基于 OpenAPI 暴露 MCP endpoint。
 - 响应字段在支持范围内保持 Memos-compatible。
-- Webhooks 放在核心 API 稳定之后。
+- Webhooks 作为自动化生态能力进入整体设计。
 
-### Tier 3：完整 Memos parity
+### 兼容边界
 
-完整 parity 不是 v1 目标。
-
-完整 Memos parity 会牵涉 Connect/gRPC、复杂 CEL filter、instance settings、SSO、notifications、webhooks、comments、reactions、admin surfaces、SSE 以及大量 Go 服务端历史细节。FlareMo 不应为了“完全一致”复制这些复杂度。
+FlareMo 兼容 Memos 生态，不复制 Memos 服务端历史包袱。Connect/gRPC、复杂 CEL filter、instance settings、SSO、notifications、comments、reactions、admin surfaces、SSE 等能力只有在它们确实服务 FlareMo 产品目标时才进入实现，不为了追求字面 parity 复制复杂度。
 
 ## API 分层
 
@@ -308,7 +306,7 @@ FlareMo 的前端以 Flomo 式快速收集为中心，不做重后台感。
 - 标签
 - 基础统计或 activity calendar
 
-后续再增加：
+产品能力包括：
 
 - 反链
 - 附件
@@ -323,27 +321,23 @@ FlareMo 的前端以 Flomo 式快速收集为中心，不做重后台感。
 - 把首页做成管理后台。
 - 一上来引入社交、评论、通知等复杂面。
 - 音乐、背景图等装饰功能进入核心路径。
-- AI 功能早于基础记录体验。
+- AI 功能压过基础记录体验。
 
-## AI 和语义搜索路线
+## AI 和语义搜索
 
-v1 不把 AI 放进主路径。
+AI 和语义搜索是 FlareMo 个人知识管理能力的一部分，但不能成为权威数据源。
 
-v1：
+基础搜索由 D1 中的权威笔记、标签、时间和状态字段提供。
 
-- D1 普通搜索。
-- 标签过滤。
-- 时间线和导入导出。
-- Memos-compatible API 子集。
+语义搜索由 Vectorize 承载派生索引：
 
-v1.5：
+- memo 内容切块。
+- 生成 embedding。
+- 写入 Vectorize。
+- 索引记录引用 D1 中的 memo。
+- 搜索命中后回 D1 读取权威 memo 数据。
 
-- R2 附件。
-- 链接预览。
-- Vectorize semantic index。
-- 后台 embedding job。
-
-v2：
+AI 工作流围绕个人知识库展开：
 
 - 问我的笔记。
 - 每日/每周回顾。
@@ -351,7 +345,9 @@ v2：
 - 附件文本抽取。
 - AI 标签建议。
 
-## 实施顺序
+## 工程顺序
+
+下面是依赖顺序，不是产品分期，也不是功能降级。FlareMo 的目标始终是完整产品。
 
 1. 建立 monorepo 和 Workers + Vite + Hono + D1 + Drizzle 基础。
 2. 定义 Drizzle schema 和 D1 migrations。
@@ -362,7 +358,7 @@ v2：
 7. 接入 R2 附件和导出包。
 8. 维护 OpenAPI。
 9. 基于 OpenAPI 增加 MCP。
-10. 在基础体验稳定后加入 Vectorize 和 AI 能力。
+10. 接入 Vectorize 和 AI 能力。
 
 ## 结论
 
