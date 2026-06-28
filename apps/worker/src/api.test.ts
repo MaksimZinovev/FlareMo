@@ -80,6 +80,27 @@ describe("FlareMo Worker API", () => {
     expect(trashed.state).toBe("trashed");
   });
 
+  it("paginates memos with page tokens", async () => {
+    await createMemo("page first");
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    await createMemo("page second");
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    await createMemo("page third");
+
+    const firstPage = await json(await fetchApp("http://flaremo.test/api/v1/memos?page_size=2&order_by=created_at asc"));
+    expect(firstPage.memos).toHaveLength(2);
+    expect(firstPage.memos.map((memo: { content: string }) => memo.content)).toEqual(["page first", "page second"]);
+    expect(firstPage.next_page_token).toBeTruthy();
+
+    const secondPage = await json(
+      await fetchApp(
+        `http://flaremo.test/api/v1/memos?page_size=2&order_by=created_at asc&page_token=${encodeURIComponent(firstPage.next_page_token)}`,
+      ),
+    );
+    expect(secondPage.memos.map((memo: { content: string }) => memo.content)).toEqual(["page third"]);
+    expect(secondPage.next_page_token).toBeUndefined();
+  });
+
   it("uploads, binds, downloads, and deletes attachments through R2 and D1", async () => {
     const memo = await createMemo("with file");
 
