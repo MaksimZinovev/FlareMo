@@ -3,14 +3,8 @@ import { ensureSingleUser } from "@flaremo/domain";
 import type { Context } from "hono";
 
 export type HonoBindings = {
-  Bindings: Env & {
-    FLAREMO_ACCESS_TOKEN?: string;
-  };
+  Bindings: Env;
 };
-
-export function isAccessTokenConfigured(c: Context<HonoBindings>) {
-  return Boolean(c.env.FLAREMO_ACCESS_TOKEN);
-}
 
 export async function getRequestContext(c: Context<HonoBindings>) {
   const db = createDb(c.env.DB);

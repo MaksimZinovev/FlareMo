@@ -106,26 +106,6 @@ export const settings = sqliteTable(
   (table) => [primaryKey({ columns: [table.userId, table.key] })],
 );
 
-export const personalAccessTokens = sqliteTable(
-  "personal_access_tokens",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    tokenHash: text("token_hash").notNull(),
-    description: text("description"),
-    expiresAt: text("expires_at"),
-    createdAt: text("created_at").notNull(),
-    lastUsedAt: text("last_used_at"),
-    revokedAt: text("revoked_at"),
-  },
-  (table) => [
-    uniqueIndex("personal_access_tokens_hash_idx").on(table.tokenHash),
-    index("personal_access_tokens_user_idx").on(table.userId),
-  ],
-);
-
 export type MemoPayload = {
   tags?: string[];
   property?: {

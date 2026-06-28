@@ -56,8 +56,6 @@ export type ListMemoParams = {
   include_deleted?: boolean;
 };
 
-const ACCESS_TOKEN_STORAGE_KEY = "flaremo.access_token";
-
 export class ApiError extends Error {
   readonly status: number;
 
@@ -66,31 +64,6 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
-}
-
-export type AuthStatus = {
-  access_token_required: boolean;
-};
-
-export function getStoredAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? "";
-}
-
-export function storeAccessToken(token: string) {
-  const trimmed = token.trim();
-  if (trimmed) {
-    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, trimmed);
-    return;
-  }
-  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-}
-
-export function clearAccessToken() {
-  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-}
-
-export async function getAuthStatus() {
-  return apiRequest<AuthStatus>("/api/app/auth", {}, { skipAuth: true });
 }
 
 export async function listMemos(params: ListMemoParams = {}) {
@@ -131,26 +104,29 @@ export async function hardDeleteMemo(id: string) {
   });
 }
 
-async function apiRequest<T>(path: string, init: RequestInit = {}, options: { skipAuth?: boolean } = {}) {
-  const token = options.skipAuth ? "" : getStoredAccessToken();
+async function apiRequest<T>(path: string, init: RequestInit = {}) {
   const response = await fetch(path, {
     ...init,
     headers: {
       "content-type": "application/json",
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
   });
 
+  const contentType = response.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
+
   if (!response.ok) {
     let message = response.statusText;
-    try {
+    if (isJson) {
       const body = (await response.json()) as { error?: { message?: string } };
       message = body.error?.message ?? message;
-    } catch {
-      // Keep status text.
     }
     throw new ApiError(message, response.status);
+  }
+
+  if (!isJson) {
+    throw new ApiError("Cloudflare Access session required", 401);
   }
 
   return (await response.json()) as T;

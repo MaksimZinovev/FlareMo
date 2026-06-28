@@ -134,7 +134,7 @@ FlareMo 首先是一个完整可用的笔记和知识管理系统，不是 Cloud
 
 ### 数据兼容
 
-- 采用 Memos 风格的核心实体：users、memos、memo relations、attachments、shares、settings、personal access tokens。
+- 采用 Memos 风格的核心实体：users、memos、memo relations、attachments、shares、settings。
 - 保留 Memos 资源命名习惯：`memos/{id}`、`users/{id}`、`attachments/{id}`。
 - 保留可映射到 Memos 的 payload/property 结构：tags、title、has_link、has_task_list、has_code、has_incomplete_tasks、location。
 - 提供 Memos 数据导入导出路径。
@@ -161,7 +161,8 @@ FlareMo 对外暴露 Memos-compatible `/api/v1`。公共兼容面包括：
 
 同时支持：
 
-- Bearer token / personal access token。
+- 生产访问控制由 Cloudflare Access 负责。
+- 脚本、工具和 MCP 通过 Cloudflare Access Service Token 访问受保护实例。
 - 常见分页参数：`page_size`、`page_token`。
 - 常见排序参数：`order_by`。
 - 常见状态过滤：`state`。
@@ -259,15 +260,6 @@ settings
   key TEXT NOT NULL
   value TEXT NOT NULL
   PRIMARY KEY (user_id, key)
-
-personal_access_tokens
-  id TEXT PRIMARY KEY
-  user_id TEXT NOT NULL
-  token_hash TEXT NOT NULL
-  description TEXT
-  expires_at TEXT
-  created_at TEXT NOT NULL
-  last_used_at TEXT
 ```
 
 payload 示例：

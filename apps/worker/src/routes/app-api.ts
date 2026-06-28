@@ -3,14 +3,12 @@ import { createMemo, hardDeleteMemo, listMemos, moveMemoToTrash, updateMemo } fr
 import { memoToDto, memosToListResponse } from "@flaremo/memos";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { getRequestContext, isAccessTokenConfigured, type HonoBindings } from "../context";
+import { getRequestContext, type HonoBindings } from "../context";
 import { jsonError } from "../http";
 
 export const appApi = new Hono<HonoBindings>();
 
 appApi.get("/health", (c) => c.json({ ok: true, product: "FlareMo" }));
-
-appApi.get("/auth", (c) => c.json({ access_token_required: isAccessTokenConfigured(c) }));
 
 appApi.get("/memos", zValidator("query", listMemosQuerySchema), async (c) => {
   try {
