@@ -2,6 +2,26 @@
 
 FlareMo 使用 SemVer。每个 release 都要写清楚升级影响、Cloudflare 资源变化和 Memos 兼容面变化。
 
+## v0.1.3
+
+Deploy Button 文档修正版本。这个版本不改变运行时代码，只把实测得到的 Cloudflare Git provider 前置条件写进 README 和部署文档。
+
+### 已包含
+
+- README 的一键部署段落增加 GitHub/GitLab provider 连接说明。
+- `docs/deploy.md` 增加 `Connect a Git account to continue.` 的原因说明。
+
+### 约束
+
+- 不新增 Cloudflare 资源。
+- 不新增 D1 migration。
+- 不改变 Memos 兼容 API。
+
+### 升级说明
+
+- 代码部署不需要额外操作。
+- 如果使用 Deploy Button，需要先在 Cloudflare Dashboard 连接 GitHub 或 GitLab provider。
+
 ## v0.1.2
 
 Deploy Button 实测记录补强版本。这个版本不改变运行时代码，只把 Cloudflare Dashboard 真实创建页的验证结果写进仓库。
