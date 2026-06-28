@@ -68,17 +68,17 @@ export function MemoCard({
   return (
     <article
       className={cn(
-        "group relative flex w-full flex-col gap-2 rounded-lg border bg-card px-4 py-3 text-card-foreground transition-colors hover:border-foreground/20",
-        memo.pinned && "border-l-4 border-l-primary",
+        "group relative flex w-full flex-col gap-2 rounded-lg bg-background px-1 py-4 text-card-foreground transition-colors",
+        memo.pinned && "border-l-2 border-l-primary pl-3",
       )}
     >
       <div className="flex w-full items-center justify-between gap-2">
         <button
-          className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
           type="button"
           onClick={() => onArchive(id)}
         >
-          {memo.pinned ? <PinIcon className="text-primary" /> : <CircleIcon className="opacity-40" />}
+          {memo.pinned ? <PinIcon className="text-primary" /> : <CircleIcon className="opacity-35" />}
           <span className="truncate">{formatMemoTime(memo.display_time, locale)}</span>
         </button>
         <div className="flex shrink-0 items-center gap-1">
@@ -135,12 +135,12 @@ export function MemoCard({
         </div>
       </div>
       <div>
-        <div className="whitespace-pre-wrap text-[15px] leading-7">{memo.content}</div>
+        <div className="whitespace-pre-wrap text-[15px] leading-7 text-foreground">{memo.content}</div>
         {attachments.length > 0 && (
           <div className="mt-3 flex flex-col gap-2">
             {attachments.map((attachment) => (
               <a
-                className="flex items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
                 href={attachment.download_url}
                 key={attachment.name}
               >
@@ -152,7 +152,7 @@ export function MemoCard({
           </div>
         )}
         {share && (
-          <div className="mt-3 rounded-md border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+          <div className="mt-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
             <a className="font-mono hover:text-foreground" href={shareUrl ?? `/share/${share.token}`}>
               {shareUrl ?? `/share/${share.token}`}
             </a>
@@ -160,10 +160,10 @@ export function MemoCard({
         )}
       </div>
       {(tags.length > 0 || memo.visibility !== "private" || memo.state !== "normal") && (
-        <footer className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <footer className="flex flex-wrap items-center justify-between gap-2 pt-2">
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => (
-              <Badge className="rounded-md" key={tag} variant="secondary">
+              <Badge className="rounded-md border-0 bg-muted text-muted-foreground" key={tag} variant="secondary">
                 #{tag}
               </Badge>
             ))}

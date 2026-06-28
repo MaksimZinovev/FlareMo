@@ -15,19 +15,19 @@ import {
   type Share,
 } from "@/api";
 import { FlareMoExplorer } from "@/components/flaremo-explorer";
-import { FlareMoSidebar, type MemoView as ViewMode } from "@/components/flaremo-sidebar";
+import type { MemoView as ViewMode } from "@/components/flaremo-sidebar";
 import { MemoComposer } from "@/components/memo-composer";
 import { MemoList } from "@/components/memo-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { extractTags, formatMemoTime, getAllTags } from "@/lib/memo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from "@tanstack/react-router";
-import { DownloadIcon, FileIcon, LanguagesIcon, SearchIcon, UploadIcon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon, FileIcon, LanguagesIcon, MenuIcon, SearchIcon, UploadIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -42,14 +42,17 @@ function FlareMoApp() {
   const normalMemosQuery = useQuery({
     queryKey: ["memos", "normal"],
     queryFn: () => listMemos({ state: "normal" }),
+    retry: false,
   });
   const archivedMemosQuery = useQuery({
     queryKey: ["memos", "archived"],
     queryFn: () => listMemos({ state: "archived" }),
+    retry: false,
   });
   const trashedMemosQuery = useQuery({
     queryKey: ["memos", "trashed"],
     queryFn: () => listMemos({ state: "trashed", include_deleted: true }),
+    retry: false,
   });
 
   const normalMemos = normalMemosQuery.data?.memos ?? [];
@@ -60,6 +63,7 @@ function FlareMoApp() {
   const attachmentsQuery = useQuery({
     enabled: visibleMemos.length > 0,
     queryKey: ["attachments", attachmentKey],
+    retry: false,
     queryFn: async () => {
       const entries = await Promise.all(
         visibleMemos.map(async (memo) => [memo.name, (await listMemoAttachments(memo.name)).attachments] as const),
@@ -166,165 +170,187 @@ function FlareMoApp() {
 
   const allTags = useMemo(() => getAllTags(normalMemos), [normalMemos]);
   const sourceMemos = view === "trashed" ? trashedMemos : view === "archived" ? archivedMemos : normalMemos;
-  const filteredMemos = sourceMemos.filter((memo) => {
-    const textMatch = query.trim() ? memo.content.toLowerCase().includes(query.trim().toLowerCase()) : true;
-    const tagMatch = activeTag ? (memo.payload.tags ?? []).includes(activeTag) : true;
-    return textMatch && tagMatch;
-  });
+  const filteredMemos = useMemo(
+    () =>
+      sourceMemos.filter((memo) => {
+        const textMatch = query.trim() ? memo.content.toLowerCase().includes(query.trim().toLowerCase()) : true;
+        const tagMatch = activeTag ? (memo.payload.tags ?? []).includes(activeTag) : true;
+        return textMatch && tagMatch;
+      }),
+    [activeTag, query, sourceMemos],
+  );
+  const appShell = (
+    <FlareMoExplorer
+      activeTag={activeTag}
+      activeView={view}
+      archivedCount={archivedMemos.length}
+      footer={
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Button
+            aria-label={t("language.toggle")}
+            className="w-12 px-2"
+            size="sm"
+            title={t("language.toggle")}
+            variant="ghost"
+            onClick={toggleLocale}
+          >
+            <LanguagesIcon data-icon="inline-start" />
+            <span className="text-xs font-medium">{t("language.next")}</span>
+          </Button>
+          <Button
+            aria-label={t("common.export")}
+            size="icon-sm"
+            variant="ghost"
+            onClick={async () => {
+              const bundle = await exportData();
+              const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const anchor = document.createElement("a");
+              anchor.href = url;
+              anchor.download = `flaremo-export-${new Date().toISOString()}.json`;
+              anchor.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            <DownloadIcon />
+          </Button>
+          <Button asChild size="icon-sm" variant="ghost">
+            <label aria-label={t("common.import")}>
+              <UploadIcon />
+              <Input
+                accept="application/json"
+                className="hidden"
+                type="file"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  const text = await file.text();
+                  importMutation.mutate(JSON.parse(text) as unknown);
+                }}
+              />
+            </label>
+          </Button>
+        </div>
+      }
+      memoCount={normalMemos.length}
+      memos={visibleMemos}
+      tags={allTags}
+      trashedCount={trashedMemos.length}
+      onTagChange={setActiveTag}
+      onViewChange={setView}
+    />
+  );
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <FlareMoSidebar
-          activeView={view}
-          archivedCount={archivedMemos.length}
-          memoCount={normalMemos.length}
-          trashedCount={trashedMemos.length}
-          onViewChange={setView}
-        />
-        <SidebarInset>
-          <div className="flex min-h-svh flex-col bg-muted/20">
-            <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-              <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4">
-                <SidebarTrigger />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="hidden h-4 w-1 rounded-full bg-primary md:block" />
-                    <div className="truncate font-heading text-base font-semibold">{viewTitle(view, t)}</div>
-                  </div>
+      <div className="h-svh overflow-hidden bg-background">
+        <div className="mx-auto flex h-full w-full max-w-[950px]">
+          <div className="no-scrollbar hidden h-full w-[312px] shrink-0 overflow-y-auto border-r bg-background lg:block">{appShell}</div>
+          <div className="flex h-full min-w-0 flex-1 flex-col">
+            <header className="z-20 shrink-0 bg-background/95 backdrop-blur">
+              <div className="flex h-14 items-center gap-2 px-5 lg:px-3">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button aria-label={t("sidebar.toggle")} className="lg:hidden" size="icon-sm" variant="ghost">
+                      <MenuIcon />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-[312px] p-0" side="left">
+                    <SheetTitle className="sr-only">{t("sidebar.title")}</SheetTitle>
+                    {appShell}
+                  </SheetContent>
+                </Sheet>
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className="hidden text-muted-foreground sm:inline">/</span>
+                  <button className="inline-flex min-w-0 items-center gap-1 rounded-md px-1.5 py-1 text-sm font-semibold hover:bg-muted" type="button">
+                    <span className="truncate">{viewTitle(view, t)}</span>
+                    <ChevronDownIcon />
+                  </button>
+                  {activeTag && (
+                    <button className="truncate rounded-md px-1.5 py-1 text-sm text-muted-foreground hover:bg-muted" type="button" onClick={() => setActiveTag(undefined)}>
+                      #{activeTag}
+                    </button>
+                  )}
                 </div>
-                <Button
-                  aria-label={t("language.toggle")}
-                  className="w-14 px-2"
-                  size="sm"
-                  title={t("language.toggle")}
-                  variant="ghost"
-                  onClick={toggleLocale}
-                >
-                  <LanguagesIcon data-icon="inline-start" />
-                  <span className="text-xs font-medium">{t("language.next")}</span>
-                </Button>
-                <Button
-                  aria-label={t("common.export")}
-                  size="icon"
-                  variant="ghost"
-                  onClick={async () => {
-                    const bundle = await exportData();
-                    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-                    const anchor = document.createElement("a");
-                    anchor.href = url;
-                    anchor.download = `flaremo-export-${new Date().toISOString()}.json`;
-                    anchor.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                >
-                  <DownloadIcon />
-                </Button>
-                <Button asChild size="icon" variant="ghost">
-                  <label aria-label={t("common.import")}>
-                    <UploadIcon />
-                    <Input
-                      accept="application/json"
-                      className="hidden"
-                      type="file"
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        event.target.value = "";
-                        if (!file) return;
-                        const text = await file.text();
-                        importMutation.mutate(JSON.parse(text) as unknown);
-                      }}
-                    />
-                  </label>
-                </Button>
-                <div className="relative hidden w-64 lg:block xl:hidden">
-                  <SearchIcon className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <div className="relative hidden w-[243px] md:block">
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    className="h-8 pl-8"
-                    placeholder={t("common.search")}
+                    className="h-9 rounded-xl border-0 bg-muted pl-9 shadow-none focus-visible:ring-1"
+                    placeholder="⌘+K"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                   />
                 </div>
               </div>
             </header>
-            <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 gap-4 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_18rem]">
-              <section className="min-w-0">
-                <div className="mb-4 rounded-lg border bg-background p-2 xl:hidden">
-                  <div className="relative">
-                    <SearchIcon className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="h-8 pl-8"
-                      placeholder={t("common.search")}
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                    />
-                  </div>
-                  {(activeTag || query.trim()) && (
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      {activeTag && (
-                        <button className="rounded-md bg-muted px-2 py-1" type="button" onClick={() => setActiveTag(undefined)}>
-                          #{activeTag}
-                        </button>
-                      )}
-                      <button
-                        className="rounded-md px-2 py-1 hover:bg-muted hover:text-foreground"
-                        type="button"
-                        onClick={() => {
-                          setActiveTag(undefined);
-                          setQuery("");
-                        }}
-                      >
-                        {t("common.clearFilters")}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col gap-3">
-                  {view === "all" && (
-                    <MemoComposer
-                      isPending={createMutation.isPending}
-                      onSubmit={({ content, visibility, tags, files }) =>
-                        createMutation.mutate({
-                          content,
-                          visibility,
-                          tags,
-                          files,
-                        })
-                      }
-                    />
-                  )}
-                  <MemoList
-                    attachmentsByMemo={attachmentsQuery.data ?? new Map()}
-                    isLoading={normalMemosQuery.isLoading || archivedMemosQuery.isLoading || trashedMemosQuery.isLoading}
-                    memos={filteredMemos}
-                    sharesByMemo={sharesByMemo}
-                    onArchive={(id) => {
-                      const memo = visibleMemos.find((item) => item.name === id || item.id === id);
-                      updateMutation.mutate({ id, input: { status: memo?.state === "archived" ? "normal" : "archived" } });
-                    }}
-                    onHardDelete={(id) => hardDeleteMutation.mutate(id)}
-                    onPin={(id, pinned) => updateMutation.mutate({ id, input: { pinned } })}
-                    onRestore={(id) => restoreMutation.mutate(id)}
-                    onShare={(id) => shareMutation.mutate(id)}
-                    onTrash={(id) => trashMutation.mutate(id)}
-                    onUpdate={(id, input) => updateMutation.mutate({ id, input })}
+            <main className="mx-auto min-h-0 w-full max-w-[640px] flex-1 overflow-y-auto px-5 pb-8 lg:px-3">
+              <div className="mb-3 md:hidden">
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="h-9 rounded-xl border-0 bg-muted pl-9 shadow-none focus-visible:ring-1"
+                    placeholder={t("common.search")}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
                   />
                 </div>
-              </section>
-              <FlareMoExplorer
-                activeTag={activeTag}
-                memos={visibleMemos}
-                query={query}
-                tags={allTags}
-                onQueryChange={setQuery}
-                onTagChange={setActiveTag}
-              />
+              </div>
+              <div className="flex flex-col gap-3">
+                {view === "all" && (
+                  <MemoComposer
+                    isPending={createMutation.isPending}
+                    onSubmit={({ content, visibility, tags, files }) =>
+                      createMutation.mutate({
+                        content,
+                        visibility,
+                        tags,
+                        files,
+                      })
+                    }
+                  />
+                )}
+                {(activeTag || query.trim()) && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    {activeTag && (
+                      <button className="rounded-md bg-muted px-2 py-1" type="button" onClick={() => setActiveTag(undefined)}>
+                        #{activeTag}
+                      </button>
+                    )}
+                    <button
+                      className="rounded-md px-2 py-1 hover:bg-muted hover:text-foreground"
+                      type="button"
+                      onClick={() => {
+                        setActiveTag(undefined);
+                        setQuery("");
+                      }}
+                    >
+                      {t("common.clearFilters")}
+                    </button>
+                  </div>
+                )}
+                <MemoList
+                  attachmentsByMemo={attachmentsQuery.data ?? new Map()}
+                  hasError={normalMemosQuery.isError || archivedMemosQuery.isError || trashedMemosQuery.isError}
+                  isLoading={normalMemosQuery.isLoading || archivedMemosQuery.isLoading || trashedMemosQuery.isLoading}
+                  memos={filteredMemos}
+                  sharesByMemo={sharesByMemo}
+                  onArchive={(id) => {
+                    const memo = visibleMemos.find((item) => item.name === id || item.id === id);
+                    updateMutation.mutate({ id, input: { status: memo?.state === "archived" ? "normal" : "archived" } });
+                  }}
+                  onHardDelete={(id) => hardDeleteMutation.mutate(id)}
+                  onPin={(id, pinned) => updateMutation.mutate({ id, input: { pinned } })}
+                  onRestore={(id) => restoreMutation.mutate(id)}
+                  onShare={(id) => shareMutation.mutate(id)}
+                  onTrash={(id) => trashMutation.mutate(id)}
+                  onUpdate={(id, input) => updateMutation.mutate({ id, input })}
+                />
+              </div>
             </main>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
+        </div>
+      </div>
       <Toaster />
     </TooltipProvider>
   );

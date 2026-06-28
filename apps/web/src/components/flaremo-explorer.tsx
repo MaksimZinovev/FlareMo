@@ -1,153 +1,196 @@
 import type { Memo } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n";
 import { extractTags } from "@/lib/memo";
 import { cn } from "@/lib/utils";
-import { HashIcon, RotateCcwIcon, SearchIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  BotIcon,
+  CalendarDaysIcon,
+  HashIcon,
+  InboxIcon,
+  MessageCircleIcon,
+  RefreshCcwIcon,
+  RouteIcon,
+  SparklesIcon,
+  Trash2Icon,
+} from "lucide-react";
+import type { ReactNode } from "react";
+
+export type ExplorerView = "all" | "archived" | "trashed";
 
 type FlareMoExplorerProps = {
   activeTag?: string;
+  activeView: ExplorerView;
+  archivedCount: number;
   memos: Memo[];
-  query: string;
+  memoCount: number;
+  footer?: ReactNode;
   tags: string[];
-  onQueryChange: (query: string) => void;
+  trashedCount: number;
   onTagChange: (tag?: string) => void;
+  onViewChange: (view: ExplorerView) => void;
 };
 
 export function FlareMoExplorer({
   activeTag,
+  activeView,
+  archivedCount,
+  footer,
   memos,
-  query,
+  memoCount,
   tags,
-  onQueryChange,
+  trashedCount,
   onTagChange,
+  onViewChange,
 }: FlareMoExplorerProps) {
   const { t } = useI18n();
   const stats = getStats(memos);
   const activity = getActivity(memos);
-  const hasFilters = Boolean(query.trim() || activeTag);
+  const navItems = [
+    { count: memoCount, icon: InboxIcon, label: t("view.timeline"), view: "all" as const },
+    { count: archivedCount, icon: ArchiveIcon, label: t("view.archive"), view: "archived" as const },
+    { count: trashedCount, icon: Trash2Icon, label: t("view.trash"), view: "trashed" as const },
+  ];
+  const featureItems = [
+    { icon: MessageCircleIcon, label: t("sidebar.wechatInput") },
+    { icon: CalendarDaysIcon, label: t("sidebar.dailyReview") },
+    { icon: SparklesIcon, label: t("sidebar.aiInsight") },
+    { icon: BotIcon, label: t("sidebar.agent") },
+    { icon: RouteIcon, label: t("sidebar.randomWalk") },
+  ];
 
   return (
-    <aside className="hidden xl:flex xl:flex-col xl:gap-4">
-      <section className="rounded-lg border bg-card p-3">
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="h-8 rounded-lg pl-8"
-            placeholder={t("common.search")}
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-          />
+    <aside className="flex min-h-full flex-col px-3 py-4 text-sm">
+      <header className="mb-5 flex items-center justify-between gap-2 px-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-foreground text-xs font-semibold text-background">
+            F
+          </div>
+          <div className="truncate font-heading text-sm font-semibold">FlareMo</div>
         </div>
-        {hasFilters && (
-          <Button className="mt-2 w-full justify-start" size="sm" variant="ghost" onClick={() => resetFilters(onQueryChange, onTagChange)}>
-            <RotateCcwIcon />
-            {t("common.clearFilters")}
-          </Button>
-        )}
+        <Button aria-label={t("sidebar.sync")} size="icon-sm" variant="ghost">
+          <RefreshCcwIcon />
+        </Button>
+      </header>
+
+      <section className="mb-4 grid grid-cols-3 gap-2 px-1">
+        <StatCell label={t("explorer.records")} value={stats.total} />
+        <StatCell label={t("explorer.tags")} value={stats.tags} />
+        <StatCell label={t("explorer.days")} value={stats.days} />
       </section>
 
-      <section className="rounded-lg border bg-card p-3">
-        <div className="mb-3 text-sm font-medium text-muted-foreground">{t("explorer.overview")}</div>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <StatCell label={t("explorer.records")} value={stats.total} />
-          <StatCell label={t("explorer.tags")} value={stats.tags} />
-          <StatCell label={t("explorer.words")} value={stats.words} />
-        </div>
-      </section>
-
-      <section className="rounded-lg border bg-card p-3">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="text-sm font-medium text-muted-foreground">{t("explorer.heatmap")}</div>
-          <span className="text-xs text-muted-foreground">{t("explorer.recentWeeks")}</span>
-        </div>
-        <div className="flex gap-1">
-          {activity.map((week) => (
-            <div className="flex flex-1 flex-col gap-1" key={week.key}>
-              {week.days.map((day) => (
-                <button
-                  aria-label={t("explorer.heatmapDay", { count: day.count, date: day.date })}
-                  className={cn("aspect-square rounded-[2px] transition-opacity hover:opacity-80", heatmapColor(day.count))}
-                  key={day.date}
-                  type="button"
-                />
-              ))}
-            </div>
+      <section className="mb-5 px-1">
+        <div className="grid grid-cols-12 gap-1">
+          {activity.map((day) => (
+            <button
+              aria-label={t("explorer.heatmapDay", { count: day.count, date: day.date })}
+              className={cn("aspect-square rounded-[3px] transition-opacity hover:opacity-80", heatmapColor(day.count))}
+              key={day.date}
+              type="button"
+            />
           ))}
         </div>
+        <div className="mt-2 flex justify-between px-1 text-xs text-muted-foreground">
+          <span>{t("explorer.monthApr")}</span>
+          <span>{t("explorer.monthMay")}</span>
+          <span>{t("explorer.monthJun")}</span>
+        </div>
       </section>
 
-      <section className="rounded-lg border bg-card p-3">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="text-sm font-medium text-muted-foreground">{t("explorer.tags")}</div>
-          {activeTag && (
-            <Button size="sm" variant="ghost" onClick={() => onTagChange(undefined)}>
-              {t("explorer.all")}
-            </Button>
-          )}
-        </div>
-        {tags.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => {
+      <nav aria-label={t("sidebar.navigation")} className="flex flex-col gap-1">
+        {navItems.map((item) => (
+          <button
+            className={cn(
+              "flex h-9 items-center gap-3 rounded-md px-2 text-left transition-colors",
+              activeView === item.view
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground hover:bg-muted",
+            )}
+            key={item.view}
+            type="button"
+            onClick={() => onViewChange(item.view)}
+          >
+            <item.icon />
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            <span className="text-xs tabular-nums opacity-70">{item.count}</span>
+          </button>
+        ))}
+        {featureItems.map((item) => (
+          <button
+            className="flex h-9 items-center gap-3 rounded-md px-2 text-left text-foreground transition-colors hover:bg-muted"
+            key={item.label}
+            type="button"
+          >
+            <item.icon />
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <section className="mt-5 flex flex-col gap-2 px-1">
+        <div className="text-xs text-muted-foreground">{t("explorer.tags")}</div>
+        <div className="flex flex-wrap gap-1.5">
+          {tags.length > 0 ? (
+            tags.map((tag) => {
               const active = activeTag === tag;
               const count = stats.tagCounts.get(tag) ?? 0;
               return (
                 <button
                   className={cn(
-                    "inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-muted",
-                    active ? "bg-primary text-primary-foreground hover:bg-primary/90" : "text-muted-foreground hover:text-foreground",
+                    "inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                    active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground",
                   )}
                   key={tag}
                   type="button"
                   onClick={() => onTagChange(active ? undefined : tag)}
                 >
-                  <HashIcon className="size-3.5 shrink-0" />
+                  <HashIcon />
                   <span className="truncate">{tag}</span>
-                  {count > 1 && (
-                    <Badge className="h-4 rounded-md px-1 text-[10px]" variant={active ? "secondary" : "outline"}>
-                      {count}
-                    </Badge>
-                  )}
+                  {count > 1 && <Badge variant={active ? "secondary" : "outline"}>{count}</Badge>}
                 </button>
               );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">{t("explorer.noTags")}</div>
-        )}
+            })
+          ) : (
+            <div className="text-xs text-muted-foreground">{t("explorer.noTags")}</div>
+          )}
+        </div>
       </section>
+      {footer && <div className="mt-auto px-1 pb-1 pt-5">{footer}</div>}
     </aside>
   );
 }
 
 function StatCell({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-muted/40 px-2 py-3">
-      <div className="font-heading text-xl font-semibold tabular-nums">{value}</div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
+    <div>
+      <div className="font-heading text-2xl font-semibold leading-none tabular-nums text-muted-foreground">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
 
 function getStats(memos: Memo[]) {
   const tagCounts = new Map<string, number>();
-  let words = 0;
+  const days = new Set<string>();
 
   for (const memo of memos) {
     const tags = memo.payload.tags ?? extractTags(memo.content);
     for (const tag of tags) {
       tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
     }
-    words += memo.content.replace(/#[^\s#]+/g, "").replace(/\s+/g, "").length;
+    const date = toDateKey(new Date(memo.display_time));
+    if (date) {
+      days.add(date);
+    }
   }
 
   return {
+    days: days.size,
     tagCounts,
     tags: tagCounts.size,
     total: memos.length,
-    words,
   };
 }
 
@@ -161,33 +204,23 @@ function getActivity(memos: Memo[]) {
   const today = startOfDay(new Date());
   const start = new Date(today);
   start.setDate(today.getDate() - 83);
-  start.setDate(start.getDate() - start.getDay());
 
-  const weeks: Array<{ key: string; days: Array<{ count: number; date: string }> }> = [];
-  for (let week = 0; week < 12; week += 1) {
-    const days: Array<{ count: number; date: string }> = [];
-    for (let day = 0; day < 7; day += 1) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + week * 7 + day);
-      const key = toDateKey(date);
-      days.push({ date: key, count: counts.get(key) ?? 0 });
-    }
-    weeks.push({ key: `week-${week}`, days });
+  const days: Array<{ count: number; date: string }> = [];
+  for (let index = 0; index < 84; index += 1) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    const key = toDateKey(date);
+    days.push({ count: counts.get(key) ?? 0, date: key });
   }
-  return weeks;
+  return days;
 }
 
 function heatmapColor(count: number) {
   if (count <= 0) return "bg-muted";
-  if (count === 1) return "bg-emerald-200 dark:bg-emerald-950";
-  if (count === 2) return "bg-emerald-300 dark:bg-emerald-800";
-  if (count === 3) return "bg-emerald-500 dark:bg-emerald-600";
-  return "bg-emerald-700 dark:bg-emerald-400";
-}
-
-function resetFilters(onQueryChange: (query: string) => void, onTagChange: (tag?: string) => void) {
-  onQueryChange("");
-  onTagChange(undefined);
+  if (count === 1) return "bg-primary/20";
+  if (count === 2) return "bg-primary/40";
+  if (count === 3) return "bg-primary/70";
+  return "bg-primary";
 }
 
 function startOfDay(date: Date) {

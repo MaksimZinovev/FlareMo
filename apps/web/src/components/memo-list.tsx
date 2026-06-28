@@ -6,6 +6,7 @@ import { MemoCard } from "./memo-card";
 import { InboxIcon } from "lucide-react";
 
 type MemoListProps = {
+  hasError?: boolean;
   isLoading: boolean;
   memos: Memo[];
   attachmentsByMemo: Map<string, Attachment[]>;
@@ -21,6 +22,7 @@ type MemoListProps = {
 
 export function MemoList({
   isLoading,
+  hasError,
   memos,
   attachmentsByMemo,
   sharesByMemo,
@@ -34,19 +36,19 @@ export function MemoList({
 }: MemoListProps) {
   const { t } = useI18n();
 
-  if (isLoading) {
+  if (isLoading && !hasError) {
     return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-32 rounded-lg" />
-        <Skeleton className="h-28 rounded-lg" />
-        <Skeleton className="h-40 rounded-lg" />
+      <div className="flex flex-col gap-4 pt-2">
+        <Skeleton className="h-20 rounded-lg" />
+        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-24 rounded-lg" />
       </div>
     );
   }
 
   if (memos.length === 0) {
     return (
-      <Empty className="min-h-64">
+      <Empty className="min-h-64 text-muted-foreground">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <InboxIcon />
@@ -59,7 +61,7 @@ export function MemoList({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col divide-y">
       {memos.map((memo) => (
         <MemoListItem
           attachments={attachmentsByMemo.get(memo.name) ?? []}

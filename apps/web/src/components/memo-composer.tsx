@@ -2,11 +2,10 @@ import type { MemoVisibility } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
 import { extractTags } from "@/lib/memo";
-import { Globe2Icon, Loader2Icon, LockIcon, PaperclipIcon, SendIcon, ShieldIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { AtSignIcon, HashIcon, ImageIcon, ListIcon, Loader2Icon, PaperclipIcon, SendIcon, XIcon } from "lucide-react";
+import { useState, type ChangeEvent, type Dispatch, type SetStateAction } from "react";
 
 type MemoComposerProps = {
   isPending: boolean;
@@ -16,24 +15,26 @@ type MemoComposerProps = {
 export function MemoComposer({ isPending, onSubmit }: MemoComposerProps) {
   const { t } = useI18n();
   const [content, setContent] = useState("");
-  const [visibility, setVisibility] = useState<MemoVisibility>("private");
   const [files, setFiles] = useState<File[]>([]);
   const tags = extractTags(content);
   const canSubmit = content.trim() || files.length > 0;
+  const appendText = (value: string) => {
+    setContent((current) => `${current}${current && !current.endsWith("\n") ? " " : ""}${value}`);
+  };
   const submit = () => {
     if (!canSubmit) {
       return;
     }
-    onSubmit({ content, visibility, tags, files });
+    onSubmit({ content, visibility: "private", tags, files });
     setContent("");
     setFiles([]);
   };
 
   return (
-    <section className="group relative flex w-full flex-col gap-2 rounded-lg border bg-card px-4 pt-3 pb-2 shadow-sm">
+    <section className="group relative flex w-full flex-col rounded-xl border border-border bg-card shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
       <Textarea
         aria-label={t("composer.ariaLabel")}
-        className="min-h-28 resize-none border-0 px-0 text-[15px] leading-7 shadow-none focus-visible:ring-0"
+        className="min-h-32 resize-none rounded-t-xl border-0 px-4 pt-4 pb-2 text-[15px] leading-7 shadow-none focus-visible:ring-0"
         disabled={isPending}
         placeholder={t("composer.placeholder")}
         value={content}
@@ -46,10 +47,10 @@ export function MemoComposer({ isPending, onSubmit }: MemoComposerProps) {
         }}
       />
       {files.length > 0 && (
-        <div className="flex flex-wrap gap-2 border-t pt-2">
+        <div className="flex flex-wrap gap-2 px-4 pb-2">
           {files.map((file) => (
             <div
-              className="flex max-w-full items-center gap-2 rounded-md border bg-muted/30 px-2 py-1 text-xs text-muted-foreground"
+              className="flex max-w-full items-center gap-2 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
               key={`${file.name}-${file.lastModified}`}
             >
               <PaperclipIcon />
@@ -67,52 +68,40 @@ export function MemoComposer({ isPending, onSubmit }: MemoComposerProps) {
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between gap-2 border-t pt-2">
+      <div className="flex h-10 items-center justify-between gap-2 rounded-b-xl bg-card px-3 pb-1">
         <div className="flex min-w-0 items-center gap-1">
+          <Button aria-label={t("composer.addTag")} size="icon-sm" type="button" variant="ghost" onClick={() => appendText("#")}>
+            <HashIcon />
+          </Button>
           <Button asChild size="icon-sm" variant="ghost">
             <label aria-label={t("composer.addAttachment")}>
-              <PaperclipIcon />
-              <Input
-                className="hidden"
-                multiple
-                type="file"
-                onChange={(event) => {
-                  setFiles(Array.from(event.target.files ?? []));
-                  event.target.value = "";
-                }}
-              />
+              <ImageIcon />
+              <Input className="hidden" multiple type="file" onChange={(event) => addFiles(event, setFiles)} />
             </label>
           </Button>
-          <ToggleGroup
-            type="single"
-            value={visibility}
-            onValueChange={(value) => {
-              if (value) setVisibility(value as MemoVisibility);
-            }}
-            size="sm"
-            variant="outline"
-          >
-            <ToggleGroupItem aria-label={t("visibility.private")} title={t("visibility.private")} value="private">
-              <LockIcon />
-              <span className="hidden sm:inline">{t("visibility.private")}</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem aria-label={t("visibility.protected")} title={t("visibility.protected")} value="protected">
-              <ShieldIcon />
-              <span className="hidden sm:inline">{t("visibility.protected")}</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem aria-label={t("visibility.public")} title={t("visibility.public")} value="public">
-              <Globe2Icon />
-              <span className="hidden sm:inline">{t("visibility.public")}</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <div className="hidden h-4 w-px bg-border sm:block" />
+          <Button aria-label={t("composer.formatText")} size="icon-sm" type="button" variant="ghost">
+            <span className="text-sm font-medium">Aa</span>
+          </Button>
+          <Button aria-label={t("composer.bulletList")} size="icon-sm" type="button" variant="ghost" onClick={() => appendText("- ")}>
+            <ListIcon />
+          </Button>
+          <Button aria-label={t("composer.mention")} size="icon-sm" type="button" variant="ghost" onClick={() => appendText("@")}>
+            <AtSignIcon />
+          </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="h-7 w-8 px-0 sm:w-auto sm:px-2.5" disabled={isPending || !canSubmit} size="sm" onClick={submit}>
+          <Button className="size-8 rounded-lg px-0" disabled={isPending || !canSubmit} size="icon-sm" onClick={submit}>
             {isPending ? <Loader2Icon data-icon="inline-start" /> : <SendIcon data-icon="inline-start" />}
-            <span className="hidden sm:inline">{t("common.save")}</span>
+            <span className="sr-only">{t("common.save")}</span>
           </Button>
         </div>
       </div>
     </section>
   );
+}
+
+function addFiles(event: ChangeEvent<HTMLInputElement>, setFiles: Dispatch<SetStateAction<File[]>>) {
+  setFiles(Array.from(event.target.files ?? []));
+  event.target.value = "";
 }
