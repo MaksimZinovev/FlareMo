@@ -18,6 +18,12 @@
 
 The screenshots show the current backend-backed timeline, editor, filtering, and mobile navigation. Features that are not implemented yet, such as AI review, semantic search, and messaging-app capture, are not exposed as placeholder UI.
 
+## Architecture
+
+<p>
+  <img src="./docs/assets/flaremo-on-cloudflare.svg" alt="FlareMo on Cloudflare — architecture diagram" width="720">
+</p>
+
 ## What It Does
 
 - Quick memo capture with tags and attachments.
