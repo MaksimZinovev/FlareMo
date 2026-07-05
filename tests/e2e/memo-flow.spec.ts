@@ -18,6 +18,37 @@ test("creates a memo and filters it by tag", async ({ page }) => {
   await expect(page.getByText(content)).toBeVisible();
 });
 
+test("filters memos by tag extracted from content", async ({ page }) => {
+  const stamp = Date.now();
+  const tag = `contenttag${stamp}`;
+  const content = `Content-tagged memo #${tag}`;
+
+  // Create a memo whose tag lives only in content, not in payload.tags.
+  const response = await page.request.post("/api/app/memos", {
+    data: {
+      content,
+      visibility: "private",
+      payload: {},
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+
+  await page.goto("/");
+
+  // Tag buttons are in the sidebar (complementary region), not inside nav.
+  const tagButton = page
+    .getByRole("complementary")
+    .getByRole("button", { name: tag, exact: true });
+  await expect(tagButton).toBeVisible();
+  await expect(page.getByText(content)).toBeVisible();
+
+  await tagButton.click();
+  await expect(page.getByText(content)).toBeVisible();
+
+  await page.getByRole("button", { name: /clear filters|清除筛选/i }).click();
+  await expect(page.getByText(content)).toBeVisible();
+});
+
 test("edits and shares a memo", async ({ page }) => {
   const stamp = Date.now();
   const content = `Lifecycle memo #life${stamp}`;
