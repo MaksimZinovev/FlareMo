@@ -10,12 +10,14 @@ test-results/
 playwright-report/
 backups/
 
-# agent local state (pi, claude, codex, cursor)
+# agent local state (pi, claude, codex, cursor, ck)
 .pi/
 .claude/
 .codex/
 .cursor/
 .ok
+.ck/
+.ckignore
 
 # local instance config (real database_id); use wrangler.jsonc.example as template
 /wrangler.jsonc

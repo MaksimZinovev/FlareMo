@@ -226,7 +226,7 @@ function FlareMoApp() {
           ? memo.content.toLowerCase().includes(query.trim().toLowerCase())
           : true;
         const tagMatch = activeTag
-          ? (memo.payload.tags ?? []).includes(activeTag)
+          ? (memo.payload.tags ?? extractTags(memo.content)).includes(activeTag)
           : true;
         return textMatch && tagMatch;
       }),
