@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Private Feed Source — Daily Star Memo (E2E)",
+    "subtitle": "Two-workflow POC: weekly harvest from GitHub stars → daily post to FlareMo. Example traces repo champ-patywee/worf.",
+    "output": "private-feed-source-e2e.html",
+    "viewBox": [940, 1120]
+  },
+  "participants": [
+    { "id": "gha", "type": "cloud", "label": "GHA", "sublabel": "GitHub Actions" },
+    { "id": "stars", "type": "external", "label": "Stars API", "sublabel": "api.github.com" },
+    { "id": "repo", "type": "database", "label": "Feed Repo", "sublabel": "private-feed-source" },
+    { "id": "cfa", "type": "security", "label": "CF Access", "sublabel": "Service Auth" },
+    { "id": "flaremo", "type": "backend", "label": "FlareMo", "sublabel": "Worker /api/v1/memos" },
+    { "id": "d1", "type": "database", "label": "D1", "sublabel": "memos store" }
+  ],
+  "segments": [
+    { "from": 150, "to": 530, "label": "01 / HARVEST · Sun 12:00 UTC" },
+    { "from": 550, "to": 1050, "label": "02 / DAILY POST · 06:00 AEST (20:00 UTC)" }
+  ],
+  "messages": [
+    { "from": "gha", "to": "stars", "y": 200, "label": "GET /users/MaksimZinovev/starred", "variant": "emphasis" },
+    { "from": "stars", "to": "gha", "y": 255, "label": "200 · starred_at + repo", "variant": "return" },
+    { "from": "gha", "to": "repo", "y": 315, "label": "load posted.json", "variant": "default" },
+    { "from": "repo", "to": "gha", "y": 370, "label": "posted ids", "variant": "return" },
+    { "from": "gha", "to": "repo", "y": 430, "label": "append queue.json · git commit", "variant": "dashed" },
+
+    { "from": "gha", "to": "repo", "y": 635, "label": "load queue.json", "variant": "default" },
+    { "from": "repo", "to": "gha", "y": 685, "label": "today: champ-patywee/worf", "variant": "return" },
+    { "from": "gha", "to": "cfa", "y": 745, "label": "POST /api/v1/memos + 2 headers", "variant": "security" },
+    { "from": "cfa", "to": "flaremo", "y": 800, "label": "Service Auth ok · forward", "variant": "emphasis" },
+    { "from": "flaremo", "to": "d1", "y": 855, "label": "insert memo · PROTECTED", "variant": "emphasis" },
+    { "from": "d1", "to": "flaremo", "y": 905, "label": "ok", "variant": "return" },
+    { "from": "flaremo", "to": "gha", "y": 955, "label": "200 · memos/{id}", "variant": "return" },
+    { "from": "gha", "to": "repo", "y": 1000, "label": "move worf → posted.json", "variant": "dashed" }
+  ],
+  "activations": [
+    { "participant": "gha", "from": 195, "to": 445, "type": "cloud" },
+    { "participant": "stars", "from": 198, "to": 260, "type": "external" },
+    { "participant": "repo", "from": 308, "to": 435, "type": "database" },
+    { "participant": "gha", "from": 625, "to": 1020, "type": "cloud" },
+    { "participant": "repo", "from": 628, "to": 695, "type": "database" },
+    { "participant": "cfa", "from": 740, "to": 785, "type": "security" },
+    { "participant": "flaremo", "from": 795, "to": 965, "type": "backend" },
+    { "participant": "d1", "from": 850, "to": 910, "type": "database" },
+    { "participant": "repo", "from": 995, "to": 1020, "type": "database" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Two-workflow design",
+      "items": [
+        "Harvest (weekly, Sun 12:00 UTC) refills queue.json from newly-starred repos",
+        "Daily (06:00 AEST = 20:00 UTC) pops one entry and posts it",
+        "queue.json + posted.json are the repo's own state — no external DB",
+        "Stars API is paginated (per_page=100) with the auto GITHUB_TOKEN (public stars)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Auth boundary",
+      "items": [
+        "Only 2 CF-Access headers (Client Id + Secret) — no FlareMo app token",
+        "Service Auth policy bypasses login; GitHub Actions IPs reach the Worker",
+        "Secrets live in GH Actions env vars only — never logged, never posted as content",
+        "Memo visibility = PROTECTED (signed-in instance users); body = {content, visibility}"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Traceability (POC choices)",
+      "items": [
+        "posted.json is the dedupe log — harvest skips ids already posted or queued",
+        "Empty queue → daily workflow exits 0 (no blank note posted)",
+        "No per-run idempotency guard — manual re-runs may double-post (POC)",
+        "Returned memo name (memos/{id}) is recorded in posted.json for audit"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Private Feed Source — End-to-End Posting Flow",
+    "subtitle": "From GitHub star to a daily PROTECTED memo in FlareMo",
+    "output": "P01-private-feed-source-e2e.html",
+    "viewBox": [920, 820]
+  },
+  "participants": [
+    { "id": "github", "type": "external", "label": "GitHub API", "sublabel": "public stars" },
+    { "id": "harvest", "type": "backend", "label": "Harvest", "sublabel": "private-feed-source" },
+    { "id": "queue", "type": "database", "label": "queue.json", "sublabel": "private repo" },
+    { "id": "daily", "type": "backend", "label": "Daily post", "sublabel": "flaremo" },
+    { "id": "posted", "type": "database", "label": "posted.json", "sublabel": "public repo" },
+    { "id": "flaremo", "type": "cloud", "label": "FlareMo API", "sublabel": "CF Access" }
+  ],
+  "segments": [
+    { "from": 150, "to": 380, "label": "01 / HARVEST (weekly)" },
+    { "from": 400, "to": 640, "label": "02 / DAILY POST" },
+    { "from": 660, "to": 730, "label": "03 / RESULT" }
+  ],
+  "messages": [
+    { "from": "harvest", "to": "github", "y": 180, "label": "GET /users/{user}/starred" },
+    { "from": "github", "to": "harvest", "y": 215, "label": "starred repo list", "variant": "return" },
+    { "from": "harvest", "to": "posted", "y": 250, "label": "GET posted.json (raw)" },
+    { "from": "posted", "to": "harvest", "y": 285, "label": "already-posted ids", "variant": "return" },
+    { "from": "harvest", "to": "queue", "y": 320, "label": "dedupe + append queue.json", "variant": "emphasis" },
+    { "from": "harvest", "to": "queue", "y": 355, "label": "commit & push queue.json" },
+    { "from": "daily", "to": "queue", "y": 420, "label": "read queue.json (PAT)", "variant": "security", "note": "read-only checkout" },
+    { "from": "queue", "to": "daily", "y": 455, "label": "queued repo entries", "variant": "return" },
+    { "from": "daily", "to": "posted", "y": 490, "label": "read posted.json" },
+    { "from": "posted", "to": "daily", "y": 525, "label": "posted repo ids", "variant": "return" },
+    { "from": "daily", "to": "flaremo", "y": 560, "label": "POST /api/v1/memos", "variant": "emphasis", "note": "CF-Access headers" },
+    { "from": "flaremo", "to": "daily", "y": 595, "label": "200 + memo name", "variant": "return" },
+    { "from": "daily", "to": "posted", "y": 630, "label": "append memo_name", "variant": "emphasis" },
+    { "from": "daily", "to": "posted", "y": 665, "label": "commit & push posted.json" }
+  ],
+  "activations": [
+    { "participant": "harvest", "from": 175, "to": 360, "type": "backend" },
+    { "participant": "github", "from": 180, "to": 215, "type": "external" },
+    { "participant": "posted", "from": 250, "to": 285, "type": "database" },
+    { "participant": "queue", "from": 320, "to": 355, "type": "database" },
+    { "participant": "daily", "from": 420, "to": 665, "type": "backend" },
+    { "participant": "queue", "from": 420, "to": 455, "type": "database" },
+    { "participant": "posted", "from": 490, "to": 525, "type": "database" },
+    { "participant": "flaremo", "from": 560, "to": 595, "type": "cloud" },
+    { "participant": "posted", "from": 630, "to": 665, "type": "database" },
+    { "participant": "queue", "from": 630, "to": 665, "type": "database" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Sensitivity split",
+      "items": [
+        "queue.json lives only in the private repo",
+        "posted.json is public — memo names + repo ids already exposed",
+        "No cross-repo writes; daily-post reads queue.json read-only"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Harvest (weekly)",
+      "items": [
+        "Auto GITHUB_TOKEN fetches public starred repos",
+        "Dedupe against local queue + public posted.json",
+        "Append-only queue.json is committed back to private repo"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Daily post",
+      "items": [
+        "Owner-gated workflow runs in flaremo repo",
+        "Read-only PAT checks out private-feed-source",
+        "First unposted repo becomes a PROTECTED memo via CF-Access Service Token"
+      ]
+    }
+  ]
+}
