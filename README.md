@@ -1,11 +1,23 @@
-# FlareMo
+<h1 align="center">FlareMo</h1>
+<img align="right" height="96px" src="https://raw.githubusercontent.com/usememos/.github/refs/heads/main/assets/logo-rounded.png" alt="Memos" />
+<p align="center">
+  <strong>A Cloudflare-native personal knowledge system that can run all day on a free Cloudflare account. It ships with D1, R2, Cloudflare Access, a quiet memo timeline, and a Memos-compatible API subset.</strong>
+</p>
 
-**A Cloudflare-native personal knowledge system that can run all day on a free Cloudflare account. It ships with D1, R2, Cloudflare Access, a quiet memo timeline, and a Memos-compatible API subset.**
+<p align="center">
+  <a href="https://github.com/realchendahuang/FlareMo"><img src="https://img.shields.io/github/stars/realchendahuang/FlareMo?style=social" alt="GitHub stars"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/github/license/realchendahuang/FlareMo" alt="license"></a>
+  <a href="https://www.cloudflare.com/"><img src="https://img.shields.io/badge/powered%20by-Cloudflare-F38020?logo=cloudflare&logoColor=white" alt="Powered by Cloudflare"></a>
+  <a href="https://github.com/usememos/memos"><img src="https://img.shields.io/badge/Memos-compatible-0466c1" alt="Memos compatible"></a>
+</p>
 
-[![GitHub stars](https://img.shields.io/github/stars/realchendahuang/FlareMo?style=social)](https://github.com/realchendahuang/FlareMo)
-[![license](https://img.shields.io/github/license/realchendahuang/FlareMo)](./LICENSE)
-[![Powered by Cloudflare](https://img.shields.io/badge/powered%20by-Cloudflare-F38020?logo=cloudflare&logoColor=white)](https://www.cloudflare.com/)
-[![Memos compatible](https://img.shields.io/badge/Memos-compatible-0466c1)](https://github.com/usememos/memos)
+<p align="center">
+  📖 <strong><a href="./docs/setup-guide/">Setup Guide →</a></strong> &middot; step-by-step install and deploy
+</p>
+
+<p align="center">
+  <a href="#architecture">Architecture</a> &middot; <a href="#what-it-does">What It Does</a> &middot; <a href="#deployment">Deployment</a> &middot; <a href="#auth-boundary">Auth Boundary</a> &middot; <a href="#tech-stack">Tech Stack</a> &middot; <a href="#memos-compatibility">Memos Compatibility</a> &middot; <a href="#development">Development</a> &middot; <a href="#contributing">Contributing</a> &middot; <a href="#license">License</a>
+</p>
 
 [中文 README](./README.zh.md)
 
