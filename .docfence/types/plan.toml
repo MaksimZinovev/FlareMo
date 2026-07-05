@@ -1,0 +1,128 @@
+name = "plan"
+statuses = ["draft", "active", "frozen", "done"]
+required_fields = ["id", "status", "owner"]
+
+[defaults]
+max_chars = 20000
+banned_words = ["TODO", "TBD", "placeholder"]
+required_sections = [
+  "Context",
+  "Tools & Skills",
+  "Approach",
+  "Out of Scope",
+  "Steps",
+  "Files to Modify",
+  "Reuse",
+  "Evidence Pack",
+  "Verification",
+  "Bottom Line",
+]
+placeholders = ["```df-todo", "[REPLACE]"]
+
+[defaults.match]
+has_checklist = '^- \[( |x)\]'
+has_source = 'Source:'
+has_file_marker = "(CREATED|UPDATED|DELETED)"
+has_test = '# Test \d'
+has_out_of_scope = "^## Out of Scope"
+has_tools_and_skills = '^## Tools & Skills'
+has_ynp_format = '^- .+: (Yes|No|Possibly)\b'
+
+[template_vars]
+id = "PLAN-001"
+title = "Plan Title"
+owner = "human"
+
+[template_vars.sections.Context]
+fill = "[REPLACE] What problem does this solve? State the issue concisely — no narrative backstory."
+banned_words = [
+  "might be",
+  "could be",
+  "seems like",
+  "I think",
+  "possibly",
+  "perhaps",
+]
+
+[template_vars.sections.Context.match]
+has_problem = '(problem|issue|bug|break|fail|cannot|does.not|unable)'
+
+[template_vars.sections."Tools & Skills"]
+fill = "[REPLACE] Ask yourself - Based on context of this task, what tools and skills would help me effieciently 1) plan and research 2) implement,  3) resolve issues when faced them, 4) verify and validate final result? ALWAYS account for needs to research, troubleshoot, leverage specialised skills and tools. Enumerate from three sources first: Skills (ls -1 ~/.pi/agent/skills/ .pi/skills/ 2>/dev/null), MCP (mcporter list), CLI (~/.pi/agent/skills/cli-tool-discovery/tool/ai-tooling). Then audit each discovered tool. Only entries from the three enumeration sources belong here. Three categories: Skills, MCP, CLI.  No entries from memory or assumption. Format: name (category): Yes (must use) / No (not needed by task scope) / Possibly (when you'd use it) - 1-line justification. Minimum 3 entries. No N/A. No file references. No dismissive No."
+banned_words = [
+  "N/A",
+  "n/a",
+  "grep sufficient",
+  "small codebase",
+  "simple enough",
+  "overkill for",
+]
+
+[template_vars.sections."Tools & Skills".match]
+min_3_ynp = '^- .+: (Yes|No|Possibly)\b'
+has_cx = '\bcx\b.*\(Skills\).*: Yes\b'
+has_ck = '\bck\b.*\(Skills\).*: Yes\b'
+has_gh = '\bgh\b.*\(CLI\).*: Yes\b'
+has_deepwiki = 'deepwiki.*\(MCP\).*: Yes\b'
+has_inspect = '\binspect\b.*\(Skills\).*: Yes\b'
+has_slopscan = '\bslop-scan\b.*\(CLI\).*: Yes\b'
+
+[template_vars.sections.Approach]
+fill = "[REPLACE] Recommended direction and rationale — why this over alternatives? Max ~10 lines. Tag any predictive/runtime claim about future behavior with [verify] (e.g. [verify] slot4 = newest); descriptive claims about existing code belong in the Evidence Pack as Claim: entries, not here."
+max_chars = 800
+banned_words = ["Q1:", "Q2:", "Q3:", "**Q", "Question:"]
+
+[template_vars.sections.Approach.match]
+has_alternative = '(alternative|instead of|rather than|compared to|over:|vs[.])'
+
+[template_vars.sections."Out of Scope"]
+fill = "[REPLACE] Bullet list of excluded items with one-line justification: item: reason. Minimum 2 items. No 'None.' cop-outs."
+banned_words = ["Nothing.", "None.", "N/A", "n/a", "Not applicable"]
+
+[template_vars.sections."Out of Scope".match]
+has_justification = '^- .+:'
+min_2_exclusions = '^- .+:'
+
+[template_vars.sections.Steps]
+fill = "[REPLACE] - [ ] checklist items with (Source: ...) citations per step. Source can reference a file path, an Evidence Pack claim, or a doc section. Minimum 3 steps. No Step/Task/Phase bold headers."
+banned_words = ["**Step", "**Task", "**Phase"]
+
+[template_vars.sections.Steps.match]
+has_step_evidence = '^- \[ \].*\(Source'
+min_3_steps = '^- \[( |x)\]'
+
+[template_vars.sections."Files to Modify"]
+fill = "[REPLACE] Tree of files to modify with inline comments: `path/to/file` — CREATED/UPDATED/DELETED: what changes and why"
+
+[template_vars.sections."Files to Modify".match]
+has_file_entry = '^- `[^`]+` — (CREATED|UPDATED|DELETED)'
+
+[template_vars.sections.Reuse]
+fill = "[REPLACE] Existing code, libraries, or patterns to reuse. No 'None.' — always identify something. name: how it's reused."
+banned_words = ["None.", "N/A", "Nothing to reuse", "No reuse"]
+
+[template_vars.sections.Reuse.match]
+has_reuse_item = '^- .+:'
+
+[template_vars.sections."Evidence Pack"]
+fill = "[REPLACE] Claims with Source, Confidence, Implication — cite every claim. Use bare Source: not bold. Minimum 2 claims with Confidence scores. Example: - Claim: X is true\n  Source: file.ts:42\n  Confidence: 0.9\n  Implication: therefore Y. Add a ### Gaps subsection for unverifiable claims."
+banned_words = ["**Source**:", "**Source:**"]
+
+[template_vars.sections."Evidence Pack".match]
+has_evidence_claim = '^- Claim:'
+has_confidence = 'Confidence:'
+
+[template_vars.sections.Verification]
+fill = "[REPLACE] Bash code blocks with # Test N: labels and # Expected: results. Put # Expected: on its own line after the command. Prefer inline # comments where possible. Include end-user testing. Minimum 2 tests. STATE-SPACE COVERAGE (required): enumerate the behavior's state space — empty/zero, minimum(1), intermediate, full/max, failure/error — and add one # Test N per point that matters. Source states from a mockup > conceptual model > intrinsic dimensions. A repro/happy case alone is NOT sufficient; at least one non-happy state (empty/partial/intermediate/boundary/failure) must be covered. Each [verify] claim from Approach must have a passing Test across its state space before the plan is 'done'."
+
+[template_vars.sections.Verification.match]
+has_verify_command = '^```bash'
+has_expected = '# Expected:'
+min_2_tests = '# Test \d'
+has_state_space = '(empty|zero|partial|intermediate|boundary|edge case|failure)'
+
+[template_vars.sections."Bottom Line"]
+fill = "[REPLACE] Per-step confidence (list each, then average; note outliers), key risk, gaps, and Recommendation: proceed/hold/redirect."
+
+[template_vars.sections."Bottom Line".match]
+has_recommendation = 'Recommendation:'

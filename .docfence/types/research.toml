@@ -1,0 +1,7 @@
+name = "research"
+statuses = ["draft", "active", "published", "frozen"]
+required_fields = ["phase", "title", "status", "version"]
+
+[defaults]
+max_chars = 3000
+banned_words = ["TODO", "TBD", "WIP"]
