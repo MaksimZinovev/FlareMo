@@ -9,6 +9,13 @@
 
 [中文 README](./README.zh.md)
 
+> **About this fork** — additive docs/config on top of upstream `realchendahuang/FlareMo`:
+> - Agent-driven end-to-end setup guide (`docs/setup-guide/`, 14 files)
+> - Plain-words deployment walkthrough + archify architecture diagram
+> - FAQ notes on access & multi-user (`faq/`)
+> - `wrangler.jsonc.example` template; local `wrangler.jsonc` gitignored
+> - English README is the default; Chinese moved to `README.zh.md`
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/realchendahuang/FlareMo)
 
 <p>
