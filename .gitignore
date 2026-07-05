@@ -8,3 +8,11 @@ dist/
 test-results/
 playwright-report/
 backups/
+
+# pi coding agent local state
+.pi/
+.claude/skills/open-knowledge
+.ok
+
+# local instance config (real database_id); use wrangler.jsonc.example as template
+/wrangler.jsonc
