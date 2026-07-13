@@ -1,3 +1,8 @@
+// Largest page size the memos list API accepts: listMemosQuerySchema caps
+// page_size at 100 (@flaremo/contracts). Requesting the max minimizes the
+// round-trips when draining every page in listMemos.
+const MEMOS_PAGE_SIZE_MAX = 100;
+
 export type MemoVisibility = "private" | "protected" | "public";
 export type MemoState = "normal" | "archived" | "trashed" | "deleted";
 
@@ -101,14 +106,25 @@ export class ApiError extends Error {
 
 export async function listMemos(params: ListMemoParams = {}) {
   const query = new URLSearchParams();
-  query.set("page_size", "50");
+  query.set("page_size", String(MEMOS_PAGE_SIZE_MAX));
   query.set("order_by", "created_at desc");
   if (params.state) query.set("state", params.state);
   if (params.q) query.set("q", params.q);
   if (params.tag) query.set("tag", params.tag);
   if (params.include_deleted) query.set("include_deleted", "true");
 
-  return apiRequest<ListMemosResponse>(`/api/app/memos?${query.toString()}`);
+  // ponytail: drain every page so the list, counts, and heatmap see all memos,
+  // not just page 1. Ceiling: O(n) full-content fetch on each load — move to
+  // infinite-scroll + a count-only stats endpoint once this gets slow.
+  const memos: Memo[] = [];
+  let pageToken: string | undefined;
+  do {
+    if (pageToken) query.set("page_token", pageToken);
+    const res = await apiRequest<ListMemosResponse>(`/api/app/memos?${query}`);
+    memos.push(...res.memos);
+    pageToken = res.next_page_token;
+  } while (pageToken);
+  return { memos, next_page_token: undefined };
 }
 
 export async function createMemo(input: CreateMemoRequest) {
