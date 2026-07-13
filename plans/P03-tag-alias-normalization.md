@@ -1,11 +1,15 @@
 ---
 id: P03
 type: plan
-status: draft
+status: done
 owner: human
 depends_on: []
 spec_checksum: 6f35563c
-last_validated: ~
+last_validated: 2026-07-13
+issue: https://github.com/MaksimZinovev/FlareMo/issues/8
+pr: https://github.com/MaksimZinovev/FlareMo/pull/12
+merge_commit: fe8c893
+deploy_version: 8b4a5eef
 ---
 
 # Collapse near-duplicate tags with an alias map (issue #8)
@@ -103,22 +107,22 @@ match:
   min_3_steps: '^- \[( |x)\]'
 ```
 
-- [ ] Branch off latest main as `fix/tag-alias-normalization` (Source: FlareMo AGENTS.md issue→branch→PR flow).
+- [x] Branch off latest main as `fix/tag-alias-normalization` (Source: FlareMo AGENTS.md issue→branch→PR flow).
   - Confidence: 0.95
   - Details: `git switch main && git pull --ff-only && git switch -c fix/tag-alias-normalization`.
-- [ ] Add the alias map, denylist, and helpers in `apps/web/src/lib/memo.ts` (Source: Evidence Pack Claim 1, Claim 5).
+- [x] Add the alias map, denylist, and helpers in `apps/web/src/lib/memo.ts` (Source: Evidence Pack Claim 1, Claim 5).
   - Confidence: 0.9
   - Details: add `TAG_ALIASES` record (~14 entries), `TAG_DENYLIST` set (`from`), `normalizeTag`, `normalizeTags` (map + dedup via Set), and `getMemoTags`; rewrite the `getAllTags` loop to use `getMemoTags`. Keep `extractTags` pure.
-- [ ] Swap the 4 inline call sites to `getMemoTags` (Source: Evidence Pack Claim 1, Claim 3, Claim 4).
+- [x] Swap the 4 inline call sites to `getMemoTags` (Source: Evidence Pack Claim 1, Claim 3, Claim 4).
   - Confidence: 0.9
   - Details: `App.tsx:229` (filter), `App.tsx:484` (share view), `flaremo-explorer.tsx:188` (getStats counts), `memo-card.tsx:71` (card chips); add the `getMemoTags` import in each file.
-- [ ] Add a unit self-check `apps/web/src/lib/memo.test.ts` (Source: ponytail SKILL — one runnable check for non-trivial logic; Evidence Pack Claim 6).
+- [x] Add a unit self-check `apps/web/src/lib/memo.test.ts` (Source: ponytail SKILL — one runnable check for non-trivial logic; Evidence Pack Claim 6).
   - Confidence: 0.9
   - Details: assert typo fix, merge+dedup, denylist drops `from`, empty input, partial passthrough.
-- [ ] Run `pnpm verify` and `slop-scan scan apps/web/src/lib/memo.ts` (Source: FlareMo AGENTS.md 验收口径).
+- [x] Run `pnpm verify` and `slop-scan scan apps/web/src/lib/memo.ts` (Source: FlareMo AGENTS.md 验收口径).
   - Confidence: 0.95
   - Details: format, lint, unit, build, e2e green; 0 slop findings in changed files.
-- [ ] Open PR closing #8 and verify live in the browser (Source: FlareMo AGENTS.md PR flow).
+- [x] Open PR closing #8 and verify live in the browser (Source: FlareMo AGENTS.md PR flow).
   - Confidence: 0.9
   - Details: hard-reload `flaremo.mkznve.workers.dev`, confirm `datepicker`/`menubar`/`typescript` appear once with merged counts, `from` is gone, and clicking a merged tag filters notes.
 
