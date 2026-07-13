@@ -47,7 +47,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { type TranslationKey, useI18n } from "@/i18n";
-import { extractTags, formatMemoTime, getAllTags } from "@/lib/memo";
+import { formatMemoTime, getAllTags, getMemoTags } from "@/lib/memo";
 
 function FlareMoApp() {
   const { t, toggleLocale } = useI18n();
@@ -226,7 +226,7 @@ function FlareMoApp() {
           ? memo.content.toLowerCase().includes(query.trim().toLowerCase())
           : true;
         const tagMatch = activeTag
-          ? (memo.payload.tags ?? extractTags(memo.content)).includes(activeTag)
+          ? getMemoTags(memo).includes(activeTag)
           : true;
         return textMatch && tagMatch;
       }),
@@ -480,9 +480,7 @@ function PublicSharePage() {
     queryFn: () => getPublicShare(token),
   });
   const share = shareQuery.data;
-  const tags = share
-    ? (share.memo.payload.tags ?? extractTags(share.memo.content))
-    : [];
+  const tags = share ? getMemoTags(share.memo) : [];
 
   return (
     <div className="min-h-svh bg-background px-4 py-6">

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { Memo } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
-import { extractTags } from "@/lib/memo";
+import { getMemoTags } from "@/lib/memo";
 import { cn } from "@/lib/utils";
 
 export type ExplorerView = "all" | "archived" | "trashed";
@@ -185,7 +185,7 @@ function getStats(memos: Memo[]) {
   const days = new Set<string>();
 
   for (const memo of memos) {
-    const tags = memo.payload.tags ?? extractTags(memo.content);
+    const tags = getMemoTags(memo);
     for (const tag of tags) {
       tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
     }
