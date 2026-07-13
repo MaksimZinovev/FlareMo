@@ -1,3 +1,8 @@
+// Largest page size the memos list API accepts: listMemosQuerySchema caps
+// page_size at 100 (@flaremo/contracts). Requesting the max minimizes the
+// round-trips when draining every page in listMemos.
+const MEMOS_PAGE_SIZE_MAX = 100;
+
 export type MemoVisibility = "private" | "protected" | "public";
 export type MemoState = "normal" | "archived" | "trashed" | "deleted";
 
@@ -101,7 +106,7 @@ export class ApiError extends Error {
 
 export async function listMemos(params: ListMemoParams = {}) {
   const query = new URLSearchParams();
-  query.set("page_size", "100");
+  query.set("page_size", String(MEMOS_PAGE_SIZE_MAX));
   query.set("order_by", "created_at desc");
   if (params.state) query.set("state", params.state);
   if (params.q) query.set("q", params.q);
