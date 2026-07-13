@@ -3,6 +3,8 @@ import type { Memo } from "@/api";
 // ponytail: canonical form per cluster — most-frequent wins; no-hyphen on tie
 // (hyphen duplicates only); shortest base form when counts absent. Ties pinned
 // in memo.test.ts. Add entries here when new duplicates appear; one const, one place.
+// ponytail: no case-folding — imported GitHub topics are lowercase, so the issue's
+// data is covered. Add toLowerCase() if hand-typed mixed-case tags (#DatePicker) appear.
 const TAG_ALIASES: Record<string, string> = {
   typescirpt: "typescript",
   "ai-agents": "ai-agent",
@@ -11,11 +13,13 @@ const TAG_ALIASES: Record<string, string> = {
   "menu-bar": "menubar",
   "status-bar": "statusbar",
   "open-graph": "opengraph",
+  "download-manager": "downloadmanager",
   "self-hosting": "self-hosted",
   "shadcn-ui": "shadcn",
   shadcnui: "shadcn",
   "vanilla-javascript": "vanilla-js",
   "transferring-data": "transfer-data",
+  skill: "skills",
 };
 
 // ponytail: denylist kept to `from` for this PR — conservative, reversible.

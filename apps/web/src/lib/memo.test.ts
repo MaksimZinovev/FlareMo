@@ -38,6 +38,15 @@ describe("normalizeTag", () => {
   it("passes unknown tags through unchanged", () => {
     expect(normalizeTag("react")).toBe("react");
   });
+
+  // ponytail: pinned tie — download-manager(1) vs downloadmanager(1), no-hyphen wins.
+  it("pins the download-manager/downloadmanager tie to the no-hyphen form", () => {
+    expect(normalizeTag("download-manager")).toBe("downloadmanager");
+  });
+
+  it("merges singular to plural canonical when plural is most-frequent", () => {
+    expect(normalizeTag("skill")).toBe("skills");
+  });
 });
 
 describe("normalizeTags", () => {
@@ -63,6 +72,10 @@ describe("normalizeTags", () => {
   // ponytail: pinned tie — open-graph(2) vs opengraph(2), no-hyphen wins per rule.
   it("pins the open-graph/opengraph tie to the no-hyphen form", () => {
     expect(normalizeTags(["open-graph", "opengraph"])).toEqual(["opengraph"]);
+  });
+
+  it("merges and dedups singular/plural (skill/skills)", () => {
+    expect(normalizeTags(["skill", "skills"])).toEqual(["skills"]);
   });
 });
 
