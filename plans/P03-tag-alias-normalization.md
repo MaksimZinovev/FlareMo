@@ -74,7 +74,7 @@ match:
   has_alternative: '(alternative|instead of|rather than|compared to|over:|vs[.])'
 ```
 
-Add one `getMemoTags(memo)` helper in `memo.ts` returning `normalizeTags(memo.payload.tags ?? extractTags(memo.content))`, backed by a static `TAG_ALIASES` map and a `TAG_DENYLIST` for noise (`from`). Replace the 4 inline `payload.tags ?? extractTags(...)` sites with this helper so normalization lives in one place — list, count badges, filter, and cards all stay consistent. `extractTags` stays pure (lossless). Alternative: the issue's literal scope (patch only `getAllTags` and `extractTags`) is fewer files, but it breaks the active-tag filter at `App.tsx:229` — clicking `datepicker` does not match notes stored as `date-picker` — and leaves card chips showing raw variants, so it is a symptom patch rather than a fix.
+Add one `getMemoTags(memo)` helper in `memo.ts` returning normalized tags, backed by a static `TAG_ALIASES` map and a `TAG_DENYLIST` (`from`). Swap the 4 inline `payload.tags ?? extractTags(...)` sites for it so normalization lives in one place — list, counts, filter, cards all consistent. `extractTags` stays pure. Alternative: the issue's literal scope (patch only `getAllTags`+`extractTags`) is fewer files, but breaks the active-tag filter (`App.tsx:229`): clicking `datepicker` won't match notes stored as `date-picker`, and leaves card chips raw — a symptom patch rather than a fix. Canonical form per cluster: most-frequent → no-hyphen-on-tie (hyphen duplicates only) → shortest base form when counts absent; ties pinned in tests.
 
 ## Out of Scope
 
@@ -190,7 +190,7 @@ match:
 
 ### Gaps
 
-- Exact alias canonical-form choices (e.g. `date-picker`→`datepicker` vs `date-picker`) are a judgment call; the plan follows the issue's example (no-hyphen canonical) and frequency (most-used wins). Adjustable in review.
+- Canonical-form selection is deterministic: most-frequent variant wins (live panel counts) → on a frequency tie the no-hyphen form wins, but only for hyphen-vs-no-hyphen duplicates of the same token (e.g. `open-graph`→`opengraph`), never for collapsing distinct multi-word tags (`model-context-protocol`→`mcp` is a most-used acronym merge, not hyphen-stripping) → when no live count exists, the shortest shared base form wins (`shadcn-ui`/`shadcnui`→`shadcn`, `vanilla-javascript`/`vanilla-js`→`vanilla-js`, `transfer-data`/`transferring-data`→`transfer-data`). Ties are pinned in `memo.test.ts`.
 - `x`→`twitter` is excluded as too generic; if the dataset's `x` is always Twitter, it can be added later.
 
 ## Verification
