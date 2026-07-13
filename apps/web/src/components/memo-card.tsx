@@ -33,7 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
-import { extractTags, formatMemoTime, getMemoResourceId } from "@/lib/memo";
+import { formatMemoTime, getMemoResourceId, getMemoTags } from "@/lib/memo";
 import { cn } from "@/lib/utils";
 
 type MemoCardProps = {
@@ -68,7 +68,7 @@ export function MemoCard({
 }: MemoCardProps) {
   const { locale, t } = useI18n();
   const id = getMemoResourceId(memo);
-  const tags = memo.payload.tags ?? extractTags(memo.content);
+  const tags = getMemoTags(memo);
   const isTrashed = memo.state === "trashed";
   const [isEditing, setIsEditing] = useState(false);
   const [draftContent, setDraftContent] = useState(memo.content);
