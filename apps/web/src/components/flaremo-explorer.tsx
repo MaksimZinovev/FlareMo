@@ -1,10 +1,13 @@
 import { ArchiveIcon, HashIcon, InboxIcon, Trash2Icon } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import type { Memo } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 import { getMemoTags } from "@/lib/memo";
 import { cn } from "@/lib/utils";
+
+// ponytail: top-N disclosure threshold; raise if long tail grows.
+const TOP_N = 25;
 
 export type ExplorerView = "all" | "archived" | "trashed";
 
@@ -34,8 +37,13 @@ export function FlareMoExplorer({
   onViewChange,
 }: FlareMoExplorerProps) {
   const { t } = useI18n();
+  const [showAllTags, setShowAllTags] = useState(false);
   const stats = getStats(memos);
   const activity = getActivity(memos);
+  // tags is already frequency-sorted by getAllTags; keep top-N plus active tag.
+  const visibleTags = showAllTags
+    ? tags
+    : tags.filter((tag, i) => i < TOP_N || tag === activeTag);
   const navItems = [
     {
       count: memoCount,
@@ -130,9 +138,9 @@ export function FlareMoExplorer({
         <div className="text-xs text-muted-foreground">
           {t("explorer.tags")}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {tags.length > 0 ? (
-            tags.map((tag) => {
+        <div className="flex flex-wrap gap-1.5" id="tag-list">
+          {visibleTags.length > 0 ? (
+            visibleTags.map((tag) => {
               const active = activeTag === tag;
               const count = stats.tagCounts.get(tag) ?? 0;
               return (
@@ -161,6 +169,19 @@ export function FlareMoExplorer({
             <div className="text-xs text-muted-foreground">
               {t("explorer.noTags")}
             </div>
+          )}
+          {tags.length > TOP_N && (
+            <button
+              aria-controls="tag-list"
+              aria-expanded={showAllTags}
+              className="text-xs text-muted-foreground underline-offset-2 motion-safe:transition-colors hover:text-foreground hover:underline px-2 py-1"
+              type="button"
+              onClick={() => setShowAllTags(!showAllTags)}
+            >
+              {showAllTags
+                ? t("explorer.showLess")
+                : t("explorer.showMoreTags", { count: tags.length - TOP_N })}
+            </button>
           )}
         </div>
       </section>

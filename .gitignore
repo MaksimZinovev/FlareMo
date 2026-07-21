@@ -12,12 +12,15 @@ backups/
 
 # agent local state (pi, claude, codex, cursor, ck)
 .pi/
+.pi-lens/
 .claude/
 .codex/
 .cursor/
 .ok
 .ck/
 .ckignore
+!.pi/workflows/
+!.pi/workflows/**
 
 # local instance config (real database_id); use wrangler.jsonc.example as template
 /wrangler.jsonc

@@ -63,9 +63,14 @@ export function formatMemoTime(value: string, locale?: string) {
 }
 
 export function getAllTags(memos: Memo[]) {
-  const tags = new Set<string>();
+  const counts = new Map<string, number>();
   for (const memo of memos) {
-    for (const tag of getMemoTags(memo)) tags.add(tag);
+    for (const tag of getMemoTags(memo)) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
   }
-  return [...tags].sort((a, b) => a.localeCompare(b));
+  // ponytail: frequency desc with alpha tiebreak — makes top-N disclosure useful.
+  return [...counts.keys()].sort(
+    (a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b),
+  );
 }
