@@ -52,6 +52,9 @@ jobs:
             -e "s|flaremo-attachments|${R2_BUCKET_NAME}|" \
             wrangler.jsonc.example > wrangler.jsonc
 
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Verify
         run: pnpm verify
 
