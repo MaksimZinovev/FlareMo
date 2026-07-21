@@ -1,4 +1,35 @@
-# weekly-post workflow — secrets, rotation, and runbook
+# Workflows
+
+## deploy — build and deploy to Cloudflare Workers
+
+Builds the web frontend and worker, applies remote D1 migrations, and deploys
+to Cloudflare Workers on push to `main` (or manual dispatch). Generates
+`wrangler.jsonc` from `wrangler.jsonc.example`, substituting the D1 database ID
+and R2 bucket name from secrets.
+
+### Owner gate
+
+Same as weekly-post: `github.repository_owner == 'MaksimZinovev'`.
+
+### Secrets (4)
+
+Set on `MaksimZinovev/FlareMo` via `gh secret set … -R MaksimZinovev/FlareMo`:
+
+| Secret | Value | Source |
+| --- | --- | --- |
+| `D1_DATABASE_ID` | D1 database UUID | Cloudflare dashboard → Workers & Pages → D1 → flaremo |
+| `R2_BUCKET_NAME` | R2 bucket name (`flaremo-attachments`) | Cloudflare dashboard → R2 |
+| `CLOUDFLARE_API_TOKEN` | API token with Workers/D1/R2 deploy perms | Cloudflare dashboard → My Profile → API Tokens |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | Cloudflare dashboard → any domain → Overview (right sidebar) |
+
+### Concurrency
+
+`group: deploy`, `cancel-in-progress: false` — a deploy is never cancelled by
+a new push; they serialize.
+
+---
+
+## weekly-post — secrets, rotation, and runbook
 
 Posts P01's starred-repo batch (`private-feed-source/data/queue.json`) to FlareMo
 as PROTECTED memos every Sunday 14:00 UTC, and commits `data/posted.json` back

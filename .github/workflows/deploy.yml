@@ -1,0 +1,62 @@
+# deploy — build and deploy FlareMo to Cloudflare Workers on push to main.
+#
+# Generates wrangler.jsonc from the example template, substituting the D1
+# database ID and R2 bucket name from secrets (wrangler.jsonc is gitignored
+# to keep the real database_id out of the repo).
+#
+# Trigger: push to main (post-merge), or manual dispatch.
+# Dormant in forks — gated to MaksimZinovev.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.repository_owner == 'MaksimZinovev'
+    runs-on: ubuntu-latest
+    env:
+      D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate wrangler.jsonc
+        run: |
+          sed \
+            -e "s|<your-d1-database_id>|${D1_DATABASE_ID}|" \
+            -e "s|flaremo-attachments|${R2_BUCKET_NAME}|" \
+            wrangler.jsonc.example > wrangler.jsonc
+
+      - name: Verify
+        run: pnpm verify
+
+      - name: Apply remote migrations
+        run: pnpm migrate:remote
+
+      - name: Deploy
+        run: pnpm deploy
