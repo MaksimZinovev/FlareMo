@@ -111,4 +111,23 @@ describe("getAllTags", () => {
     ];
     expect(getAllTags(memos)).toEqual(["ai-agent", "datepicker", "menubar"]);
   });
+
+  it("sorts by frequency desc with alpha tiebreak", () => {
+    const memos = [
+      memoWith("#react"),
+      memoWith("#react"),
+      memoWith("#react"),
+      memoWith("#ai-agent"),
+      memoWith("#ai-agent"),
+      memoWith("#zinc"),
+    ];
+    // react(3) > ai-agent(2) > zinc(1)
+    expect(getAllTags(memos)).toEqual(["react", "ai-agent", "zinc"]);
+  });
+
+  it("uses alphabetical tiebreak when counts are equal", () => {
+    const memos = [memoWith("#zinc"), memoWith("#alpha"), memoWith("#mid")];
+    // all count=1 → pure alphabetical
+    expect(getAllTags(memos)).toEqual(["alpha", "mid", "zinc"]);
+  });
 });
