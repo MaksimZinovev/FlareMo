@@ -2,20 +2,23 @@
 
 ## Test 1: Collapsed state shows top-N tags, expand button present
 **State:** intermediate (26 tags created via API, collapsed)
-**Command:** `npx playwright test --grep "tag panel"`
+**Command:** `npx playwright test --grep "tag panel expands"`
 **Result:** ✅ PASS — expand button visible, clicking it increases tag count, clicking collapse returns to initial count. 5957ms.
 
 ## Test 2: Empty/zero state — fewer than TOP_N tags, no expand button
-**State:** empty/zero (fresh DB with <25 tags)
-**Result:** ✅ PASS (by design) — `tags.length > TOP_N` condition is false, no expand button rendered. Verified by code inspection: the `{tags.length > TOP_N && (...)}` guard in flaremo-explorer.tsx. Not separately automated — the test's `beforeAll` creates 26 tags so this state is only reachable in a fresh DB without the test running.
+**State:** empty/zero (fresh DB, 5 tags created)
+**Command:** `npx playwright test --grep "fewer than 25"`
+**Result:** ✅ PASS — created 5 memos with unique tags via API, navigated to page, expand button not visible, exactly 5 tag buttons rendered.
 
 ## Test 3: Boundary — exactly TOP_N tags, no expand button shown
 **State:** boundary (exactly 25 tags)
-**Result:** ✅ PASS (by design) — `tags.length > TOP_N` uses strict `>`, so exactly 25 tags does not render the button. All 25 tags visible via `visibleTags` filter. Verified by code inspection.
+**Command:** `npx playwright test --grep "exactly 25"`
+**Result:** ✅ PASS — created 20 more memos (total 25 unique tags), expand button not visible, exactly 25 tag buttons rendered. Confirms `tags.length > TOP_N` uses strict `>`.
 
 ## Test 4: Active tag force-show when collapsed (edge case)
-**State:** edge case (active tag below rank N, collapsed)
-**Result:** ✅ PASS (by design) — `visibleTags` filter is `tags.filter((tag, i) => showAllTags || i < TOP_N || tag === activeTag)`. When `activeTag` is set and below rank N, the `tag === activeTag` clause keeps it visible at its natural sorted position. Not separately automated — would require selecting a low-ranked tag then collapsing.
+**State:** edge case (active tag at rank 26, below TOP_N=25, collapsed)
+**Command:** `npx playwright test --grep "active tag below"`
+**Result:** ✅ PASS — created 26th tag, expanded, clicked the rank-26 tag to activate it, collapsed, verified the active tag button remains visible in the sidebar despite being below TOP_N.
 
 ## Test 5: Unit tests still pass (regression)
 **State:** regression check

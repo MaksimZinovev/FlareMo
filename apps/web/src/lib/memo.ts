@@ -69,7 +69,7 @@ export function getAllTags(memos: Memo[]) {
       counts.set(tag, (counts.get(tag) ?? 0) + 1);
     }
   }
-  // ponytail: frequency desc with alpha tiebreak — makes top-N disclosure (3A) useful.
+  // ponytail: frequency desc with alpha tiebreak — makes top-N disclosure useful.
   return [...counts.keys()].sort(
     (a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b),
   );

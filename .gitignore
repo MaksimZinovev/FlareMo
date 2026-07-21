@@ -19,6 +19,8 @@ backups/
 .ok
 .ck/
 .ckignore
+!.pi/workflows/
+!.pi/workflows/**
 
 # local instance config (real database_id); use wrangler.jsonc.example as template
 /wrangler.jsonc

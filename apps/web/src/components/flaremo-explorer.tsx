@@ -6,9 +6,7 @@ import { useI18n } from "@/i18n";
 import { getMemoTags } from "@/lib/memo";
 import { cn } from "@/lib/utils";
 
-// ponytail: top-N disclosure threshold — covers all tags with count >= 3 in the
-// current dataset. Raise if the long tail grows or add a search input (Idea 3B)
-// if scanning the expanded list becomes unwieldy.
+// ponytail: top-N disclosure threshold; raise if long tail grows.
 const TOP_N = 25;
 
 export type ExplorerView = "all" | "archived" | "trashed";
@@ -43,9 +41,9 @@ export function FlareMoExplorer({
   const stats = getStats(memos);
   const activity = getActivity(memos);
   // tags is already frequency-sorted by getAllTags; keep top-N plus active tag.
-  const visibleTags = tags.filter(
-    (tag, i) => showAllTags || i < TOP_N || tag === activeTag,
-  );
+  const visibleTags = showAllTags
+    ? tags
+    : tags.filter((tag, i) => i < TOP_N || tag === activeTag);
   const navItems = [
     {
       count: memoCount,

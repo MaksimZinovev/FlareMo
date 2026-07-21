@@ -1,7 +1,7 @@
 ---
 id: P04
 type: plan
-status: draft
+status: done
 owner: human
 depends_on: [P03]
 spec_checksum: 8fadeb61
