@@ -12,6 +12,7 @@ backups/
 
 # agent local state (pi, claude, codex, cursor, ck)
 .pi/
+.pi-lens/
 .claude/
 .codex/
 .cursor/
