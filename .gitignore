@@ -84,3 +84,7 @@ Backups.backupdb
 .MobileBackups.trash
 MobileBackups.trash
 tmbootpicker.efi
+
+# local agent notes (grilling/shaping scratch)
+.local/
+.docfence/checksum.log

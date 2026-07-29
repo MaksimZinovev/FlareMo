@@ -1,7 +1,7 @@
 ---
 id: PLAN-005
 type: plan
-status: draft
+status: done
 owner: human
 depends_on: []
 spec_checksum: 05a3dcf5
@@ -37,7 +37,7 @@ match:
   has_problem: '(problem|issue|bug|break|fail|cannot|does.not|unable)'
 ```
 
-Memo content is rendered as raw text, so markdown the user writes (observed: `**bold**`) displays literally as asterisks instead of styled text. Issue: the app cannot communicate emphasis — `memo-card.tsx` and the public share view in `App.tsx` both dump `content` into a `whitespace-pre-wrap` div. Full requirement locked via grilling interview: `.local/memo-bold-rendering-shaping.md`, GH issue #16.
+Memo content is rendered as raw text, so markdown the user writes (observed: `**bold**`) displays literally as asterisks instead of styled text. Issue: the app cannot communicate emphasis — `memo-card.tsx` and the public share view in `App.tsx` both dump `content` into a `whitespace-pre-wrap` div. Full requirement locked via grilling interview: `specs/P05-memo-bold-rendering-spec.md`, GH issue #16.
 
 ## Tools & Skills
 
@@ -104,10 +104,10 @@ match:
   min_3_steps: '^- \[( |x)\]'
 ```
 
-- [ ] Create `apps/web/src/components/memo-content.tsx` exporting `MemoContent({ text }: { text: string })`: `text.split(/(\*\*[^*\n]+\*\*)/g).map((part, i) => bold ? <strong key={i}>` with ponytail comment naming ceiling + react-markdown upgrade path (Source: .local/memo-bold-rendering-shaping.md, decisions 1–3)
+- [ ] Create `apps/web/src/components/memo-content.tsx` exporting `MemoContent({ text }: { text: string })`: `text.split(/(\*\*[^*\n]+\*\*)/g).map((part, i) => bold ? <strong key={i}>` with ponytail comment naming ceiling + react-markdown upgrade path (Source: specs/P05-memo-bold-rendering-spec.md, decisions 1–3)
 - [ ] Swap `memo-card.tsx:162` `{memo.content}` → `<MemoContent text={memo.content} />`, keep wrapping div classes unchanged (Source: apps/web/src/components/memo-card.tsx:162)
 - [ ] Swap `App.tsx:509` `{share.memo.content}` → `<MemoContent text={share.memo.content} />` in the share view (Source: apps/web/src/App.tsx:509)
-- [ ] Add `apps/web/src/components/memo-content.test.tsx` (vitest): bold converts, single `*` untouched, `<b>` injection stays escaped, math-pair behavior documented (Source: .local/memo-bold-rendering-shaping.md, decision 4)
+- [ ] Add `apps/web/src/components/memo-content.test.tsx` (vitest): bold converts, single `*` untouched, `<b>` injection stays escaped, math-pair behavior documented (Source: specs/P05-memo-bold-rendering-spec.md, decision 4)
 - [ ] Run `pnpm --filter @flaremo/web test && pnpm --filter @flaremo/web check`, then inspect_triage + slop-scan on the diff (Source: Tools & Skills — inspect, slop-scan)
 
 ## Files to Modify
