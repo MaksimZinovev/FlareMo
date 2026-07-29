@@ -4,8 +4,8 @@ type: plan
 status: draft
 owner: human
 depends_on: []
-spec_checksum: 94e643f6
-last_validated: ~
+spec_checksum: 05a3dcf5
+last_validated: 2026-07-29T18:35:16+00:00
 ---
 
 # Memo Bold Rendering (Issue #16)
@@ -47,8 +47,6 @@ max_chars: 100000
 banned_words: [N/A, n/a, grep sufficient, small codebase, simple enough, overkill for]
 match:
   min_3_ynp: '^- .+: (Yes|No|Possibly)\b'
-  has_cx: '\bcx\b.*\(Skills\).*: Yes\b'
-  has_ck: '\bck\b.*\(Skills\).*: Yes\b'
   has_gh: '\bgh\b.*\(CLI\).*: Yes\b'
   has_deepwiki: 'deepwiki.*\(MCP\).*: Yes\b'
   has_inspect: '\binspect\b.*\(Skills\).*: Yes\b'
