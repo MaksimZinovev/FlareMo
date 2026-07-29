@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { Attachment, Memo, MemoState, MemoVisibility, Share } from "@/api";
+import { MemoContent } from "@/components/memo-content";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -160,7 +161,7 @@ export function MemoCard({
       </div>
       <div>
         <div className="whitespace-pre-wrap text-[15px] leading-7 text-foreground">
-          {memo.content}
+          <MemoContent text={memo.content} />
         </div>
         {attachments.length > 0 && (
           <div className="mt-3 flex flex-col gap-2">

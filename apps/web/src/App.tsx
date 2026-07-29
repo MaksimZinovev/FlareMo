@@ -35,6 +35,7 @@ import {
 import { FlareMoExplorer } from "@/components/flaremo-explorer";
 import type { MemoView as ViewMode } from "@/components/flaremo-sidebar";
 import { MemoComposer } from "@/components/memo-composer";
+import { MemoContent } from "@/components/memo-content";
 import { MemoList } from "@/components/memo-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -507,7 +508,7 @@ function PublicSharePage() {
               {formatMemoTime(share.memo.display_time, locale)}
             </div>
             <div className="whitespace-pre-wrap text-base leading-7">
-              {share.memo.content}
+              <MemoContent text={share.memo.content} />
             </div>
             {tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
