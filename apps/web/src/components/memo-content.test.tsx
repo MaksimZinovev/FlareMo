@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoContent } from "./memo-content";
 
-const html = (text: string) => renderToStaticMarkup(<MemoContent text={text} />);
+const html = (text: string) =>
+  renderToStaticMarkup(<MemoContent text={text} />);
 
 describe("MemoContent", () => {
   it("zero markers: plain text unchanged", () => {
@@ -14,7 +15,9 @@ describe("MemoContent", () => {
   });
 
   it("intermediate: multiple pairs all convert", () => {
-    expect(html("a **b** c **d**")).toBe("a <strong>b</strong> c <strong>d</strong>");
+    expect(html("a **b** c **d**")).toBe(
+      "a <strong>b</strong> c <strong>d</strong>",
+    );
   });
 
   it("lone asterisks stay literal", () => {
